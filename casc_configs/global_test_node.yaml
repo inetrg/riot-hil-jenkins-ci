@@ -1,0 +1,28 @@
+jenkins:
+  nodes:
+  - permanent:
+      numExecutors: 1
+      labelString: "HIL esp8266-esp-12x raspbian"
+      launcher:
+        ssh:
+          credentialsId: "jenkins_master_ssh"
+          host: "141.22.28.236"
+          port: 22
+          sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+      name: "test_node"
+      nodeDescription: "The node in position 1 of rack 4 in the HiL Server Room"
+      nodeProperties:
+      - envVars:
+          env:
+          - key: "BOARD"
+            value: "esp8266-esp-12x"
+          - key: "GIT_CACHE_PATH"
+            value: "/opt/riot-scripts/"
+          - key: "MAKE"
+            value: "make"
+          - key: "PHILIP_PORT"
+            value: "/dev/hil/philip"
+          - key: "PORT"
+            value: "/dev/hil/dut"
+      remoteFS: "/opt/jenkins"
+      retentionStrategy: "always"

@@ -1,0 +1,56 @@
+jobs:
+  - script: >
+      multibranchPipelineJob('RIOT-HIL') {
+        branchSources {
+          branchSource {
+            source {
+              github {
+                // The id option in the Git and GitHub branch source contexts is now mandatory (JENKINS-43693).
+                id('${GITHUB_UID}') // IMPORTANT: use a constant and unique identifier
+                repoOwner('${GITHUB_REPO_OWNER}')
+                repository('RobotFW-tests')
+                configuredByUrl(false)
+                repositoryUrl('https://github.com/RIOT-OS/RobotFW-tests')
+                apiUri('https://github.com/api/v3')
+                credentialsId('github_token')
+                traits {
+                  gitHubBranchDiscovery {
+                    strategyId(0)
+                  }
+                  gitHubPullRequestDiscovery {
+                    strategyId(2)
+                  }
+                }
+              }
+            }
+            strategy {
+              namedBranchesDifferent {
+                namedExceptions {
+                  named {
+                    name('master')
+                    props {
+                      suppressAutomaticTriggering()
+                    }
+                  }
+                  named {
+                    name('nightly')
+                    props {
+                      suppressAutomaticTriggering()
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        configure {
+          def traits = it / 'sources' / 'data' / 'jenkins.branch.BranchSource' / 'source' / 'traits'
+          traits << 'org.jenkinsci.plugins.github__branch__source.ForkPullRequestDiscoveryTrait' {
+            strategyId(2)
+            trust(class: 'org.jenkinsci.plugins.github_branch_source.ForkPullRequestDiscoveryTrait$TrustNobody')
+          }
+        }
+        triggers {
+          periodic (1)
+        }
+      }

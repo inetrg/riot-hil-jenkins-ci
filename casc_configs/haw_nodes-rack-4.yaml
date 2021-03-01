@@ -1,0 +1,158 @@
+jenkins:
+  nodes:
+  - permanent:
+      numExecutors: 1
+      labelString: "HIL esp8266-esp-12x raspbian"
+      launcher:
+        ssh:
+          credentialsId: "jenkins_master_ssh"
+          host: "10.28.48.41"
+          port: 22
+          sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+      name: "r4p1"
+      nodeDescription: "The node in position 1 of rack 4 in the HiL Server Room"
+      nodeProperties:
+      - envVars:
+          env:
+          - key: "BOARD"
+            value: "esp8266-esp-12x"
+          - key: "GIT_CACHE_PATH"
+            value: "/opt/riot-scripts/"
+          - key: "MAKE"
+            value: "make"
+          - key: "PHILIP_PORT"
+            value: "/dev/hil/philip"
+          - key: "PORT"
+            value: "/dev/hil/dut"
+      remoteFS: "/opt/jenkins"
+      retentionStrategy: "always"
+  - permanent:
+      numExecutors: 1
+      labelString: "HIL nucleo-f303re raspbian"
+      launcher:
+        ssh:
+          credentialsId: "jenkins_master_ssh"
+          host: "10.28.48.42"
+          port: 22
+          sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+      name: "r4p2"
+      nodeDescription: "The node in position 2 of rack 4 in the HiL Server Room"
+      nodeProperties:
+      - envVars:
+          env:
+          - key: "BOARD"
+            value: "nucleo-f303re"
+          - key: "GIT_CACHE_PATH"
+            value: "/opt/riot-scripts/"
+          - key: "HIL_RESET_WAIT"
+            value: 0
+          - key: "MAKE"
+            value: "make"
+          - key: "PHILIP_PORT"
+            value: "/dev/hil/philip"
+          - key: "PATH"
+            value: "${PATH}:/opt/JLink"
+          - key: "PORT"
+            value: "/dev/hil/dut"
+          - key: "RESET"
+            value: "python3 -m philip_pal --dut_reset"
+          - key: "RESET_FLAGS"
+            value: "/dev/hil/philip"
+      remoteFS: "/opt/jenkins"
+      retentionStrategy: "always"
+  - permanent:
+      numExecutors: 1
+      labelString: "HIL nucleo-l152re raspbian"
+      launcher:
+        ssh:
+          credentialsId: "jenkins_master_ssh"
+          host: "10.28.48.43"
+          port: 22
+          sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+      name: "r4p3"
+      nodeDescription: "The node in position 3 of rack 4 in the HiL Server Room"
+      nodeProperties:
+      - envVars:
+          env:
+          - key: "BOARD"
+            value: "nucleo-l152re"
+          - key: "GIT_CACHE_PATH"
+            value: "/opt/riot-scripts/"
+          - key: "HIL_RESET_WAIT"
+            value: 0
+          - key: "MAKE"
+            value: "make"
+          - key: "PHILIP_PORT"
+            value: "/dev/hil/philip"
+          - key: "PORT"
+            value: "/dev/hil/dut"
+          - key: "RESET"
+            value: "python3 -m philip_pal --dut_reset"
+          - key: "RESET_FLAGS"
+            value: "/dev/hil/philip"
+      remoteFS: "/opt/jenkins"
+      retentionStrategy: "always"
+  - permanent:
+      numExecutors: 1
+      labelString: "HIL nucleo-l432kc raspbian"
+      launcher:
+        ssh:
+          credentialsId: "jenkins_master_ssh"
+          host: "10.28.48.44"
+          port: 22
+          sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+      name: "r4p4"
+      nodeDescription: "The node in position 4 of rack 4 in the HiL Server Room"
+      nodeProperties:
+      - envVars:
+          env:
+          - key: "BOARD"
+            value: "nucleo-l432kc"
+          - key: "GIT_CACHE_PATH"
+            value: "/opt/riot-scripts/"
+          - key: "HIL_RESET_WAIT"
+            value: 0
+          - key: "MAKE"
+            value: "make"
+          - key: "PHILIP_PORT"
+            value: "/dev/hil/philip"
+          - key: "PORT"
+            value: "/dev/hil/dut"
+          - key: "RESET"
+            value: "python3 -m philip_pal --dut_reset"
+          - key: "RESET_FLAGS"
+            value: "/dev/hil/philip"
+      remoteFS: "/opt/jenkins"
+      retentionStrategy: "always"
+  - permanent:
+      numExecutors: 1
+      labelString: "HIL saml11-xpro raspbian"
+      launcher:
+        ssh:
+          credentialsId: "jenkins_master_ssh"
+          host: "10.28.48.45"
+          port: 22
+          sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+      name: "r4p5"
+      nodeDescription: "The node in position 5 of rack 4 in the HiL Server Room"
+      nodeProperties:
+      - envVars:
+          env:
+          - key: "BOARD"
+            value: "saml11-xpro"
+          - key: "GIT_CACHE_PATH"
+            value: "/opt/riot-scripts/"
+          - key: "HIL_RESET_WAIT"
+            value: 0
+          - key: "MAKE"
+            value: "make"
+          - key: "PHILIP_PORT"
+            value: "/dev/hil/philip"
+          - key: "PORT"
+            value: "/dev/hil/dut"
+          - key: "RESET"
+            value: "python3 -m philip_pal --dut_reset"
+          - key: "RESET_FLAGS"
+            value: "/dev/hil/philip"
+      remoteFS: "/opt/jenkins"
+      retentionStrategy: "always"

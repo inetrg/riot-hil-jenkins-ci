@@ -1,0 +1,132 @@
+jenkins:
+  nodes:
+  - permanent:
+      numExecutors: 1
+      labelString: "HIL samr21-xpro raspbian"
+      launcher:
+        ssh:
+          credentialsId: "jenkins_master_ssh"
+          host: "10.28.48.11"
+          port: 22
+          sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+      name: "r1p1"
+      nodeDescription: "The node in position 1 of rack 1 in the HiL Server Room"
+      nodeProperties:
+      - envVars:
+          env:
+          - key: "BOARD"
+            value: "samr21-xpro"
+          - key: "GIT_CACHE_PATH"
+            value: "/opt/riot-scripts/"
+          - key: "HIL_RESET_WAIT"
+            value: 0
+          - key: "MAKE"
+            value: "make"
+          - key: "PHILIP_PORT"
+            value: "/dev/hil/philip"
+          - key: "PORT"
+            value: "/dev/hil/dut"
+          - key: "RESET"
+            value: "python3 -m philip_pal --dut_reset"
+          - key: "RESET_FLAGS"
+            value: "/dev/hil/philip"
+      remoteFS: "/opt/jenkins"
+      retentionStrategy: "always"
+  - permanent:
+      numExecutors: 1
+      labelString: "HIL nrf52dk raspbian"
+      launcher:
+        ssh:
+          credentialsId: "jenkins_master_ssh"
+          host: "10.28.48.12"
+          port: 22
+          sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+      name: "r1p2"
+      nodeDescription: "The node in position 2 of rack 1 in the HiL Server Room"
+      nodeProperties:
+      - envVars:
+          env:
+          - key: "BOARD"
+            value: "nrf52dk"
+          - key: "GIT_CACHE_PATH"
+            value: "/opt/riot-scripts/"
+          - key: "HIL_RESET_WAIT"
+            value: 0
+          - key: "MAKE"
+            value: "make"
+          - key: "PATH"
+            value: "${PATH}:/opt/JLink"
+          - key: "PHILIP_PORT"
+            value: "/dev/hil/philip"
+          - key: "PORT"
+            value: "/dev/hil/dut"
+      remoteFS: "/opt/jenkins"
+      retentionStrategy: "always"
+  - permanent:
+      numExecutors: 1
+      labelString: "HIL nucleo-l073rz raspbian"
+      launcher:
+        ssh:
+          credentialsId: "jenkins_master_ssh"
+          host: "10.28.48.13"
+          port: 22
+          sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+      name: "r1p3"
+      nodeDescription: "The node in position 3 of rack 1 in the HiL Server Room"
+      nodeProperties:
+      - envVars:
+          env:
+          - key: "BOARD"
+            value: "nucleo-l073rz"
+          - key: "GIT_CACHE_PATH"
+            value: "/opt/riot-scripts/"
+          - key: "HIL_RESET_WAIT"
+            value: 0
+          - key: "MAKE"
+            value: "make"
+          - key: "PHILIP_PORT"
+            value: "/dev/hil/philip"
+          - key: "PORT"
+            value: "/dev/hil/dut"
+          - key: "RESET"
+            value: "python3 -m philip_pal --dut_reset"
+          - key: "RESET_FLAGS"
+            value: "/dev/hil/philip"
+          - key: "OPENOCD_RESET_USE_CONNECT_ASSERT_SRST"
+            value: "1"
+      remoteFS: "/opt/jenkins"
+      retentionStrategy: "always"
+  - permanent:
+      numExecutors: 1
+      labelString: "HIL nucleo-f411re raspbian"
+      launcher:
+        ssh:
+          credentialsId: "jenkins_master_ssh"
+          host: "10.28.48.14"
+          port: 22
+          sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+      name: "r1p4"
+      nodeDescription: "The node in position 4 of rack 1 in the HiL Server Room"
+      nodeProperties:
+      - envVars:
+          env:
+          - key: "BOARD"
+            value: "nucleo-f411re"
+          - key: "GIT_CACHE_PATH"
+            value: "/opt/riot-scripts/"
+          - key: "HIL_RESET_WAIT"
+            value: 0
+          - key: "MAKE"
+            value: "make"
+          - key: "PHILIP_PORT"
+            value: "/dev/hil/philip"
+          - key: "PORT"
+            value: "/dev/hil/dut"
+          - key: "RESET"
+            value: "python3 -m philip_pal --dut_reset"
+          - key: "RESET_FLAGS"
+            value: "/dev/hil/philip"
+          - key: "OPENOCD_RESET_USE_CONNECT_ASSERT_SRST"
+            value: "1"
+      remoteFS: "/opt/jenkins"
+      retentionStrategy: "always"
