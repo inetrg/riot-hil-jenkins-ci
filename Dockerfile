@@ -1,4 +1,5 @@
-FROM jenkins/jenkins:lts
+FROM jenkins/jenkins:2.263.4-lts
+
 ENV JAVA_OPTS -Djenkins.install.runSetupWizard=false
 ENV CASC_JENKINS_CONFIG /var/casc_configs
 
