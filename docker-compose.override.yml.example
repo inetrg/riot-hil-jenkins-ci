@@ -1,0 +1,14 @@
+version: "3.3"
+
+# The local testing does not include persistent storage
+# of jenkins_home as we want to test with a fresh start.
+volumes:
+  local_jenkins_home:
+
+services:
+  jenkins:
+    volumes:
+      # - /path/to/local/secrets:/run/secrets
+      - local_jenkins_home:/var/jenkins_home
+    ports:
+      - "8080:8080"
