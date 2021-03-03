@@ -48,4 +48,4 @@ credentials:
 
 unclassified:
   location:
-    url: https://ci.riot-os.org/hil/
+    url: "${JENKINS_URL}"
