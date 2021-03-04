@@ -1,4 +1,5 @@
-FROM jenkins/jenkins:lts
+FROM jenkins/jenkins:2.263.4-lts
+
 ENV JAVA_OPTS -Djenkins.install.runSetupWizard=false
 ENV CASC_JENKINS_CONFIG /var/casc_configs
 
@@ -24,6 +25,9 @@ ENV GITHUB_REPO_OWNER=$GITHUB_REPO_OWNER
 
 ARG GITHUB_CI_USERNAME=riot-ci
 ENV GITHUB_CI_USERNAME=$GITHUB_CI_USERNAME
+
+ARG JENKINS_URL="https://ci.riot-os.org/hil/"
+ENV JENKINS_URL=$JENKINS_URL
 
 ARG JENKINS_PREFIX="hil"
 ENV JENKINS_OPTS="--prefix=/${JENKINS_PREFIX}"
