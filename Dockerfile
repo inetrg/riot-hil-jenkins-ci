@@ -11,7 +11,6 @@ RUN apt-get update && apt-get install -y \
 USER jenkins
 
 ENV JAVA_OPTS -Djenkins.install.runSetupWizard=false
-ENV CASC_JENKINS_CONFIG /var/casc_configs
 
 ENV SECRETS /run/secrets
 
@@ -42,9 +41,14 @@ ENV JENKINS_URL=$JENKINS_URL
 ARG JENKINS_PREFIX="hil"
 ENV JENKINS_OPTS="--prefix=/${JENKINS_PREFIX}"
 
+ENV CASC_JENKINS_CONFIG /var/casc_configs
+
+ARG CASC_ENV="live"
+ENV CASC_ENV=$CASC_ENV
+
 COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
 # RUN jenkins-plugin-cli -f /usr/share/jenkins/ref/plugins.txt
 # Though they recommend using the plugin cli it sometimes freezes on poor networks so we can fallback to the old tried and true
 RUN /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt
 
-COPY casc_configs /var/casc_configs
+COPY casc_configs/common "casc_configs/${CASC_ENV}/*" "${CASC_JENKINS_CONFIG}/"
