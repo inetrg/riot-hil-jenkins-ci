@@ -12,6 +12,7 @@ services:
         GITHUB_REPO_OWNER: riot-hil-bot
         GITHUB_CI_USERNAME: riot-hil-bot
         JENKINS_PREFIX:
+        CASC_ENV: local
     image: riot-hil-jenkins-ci/local:latest
 
     volumes:
