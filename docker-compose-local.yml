@@ -1,7 +1,5 @@
 version: "3.3"
 
-volumes:
-  local_jenkins_home:
 
 services:
   jenkins:
@@ -12,10 +10,10 @@ services:
         GITHUB_REPO_OWNER: riot-hil-bot
         GITHUB_CI_USERNAME: riot-hil-bot
         JENKINS_PREFIX:
+        JENKINS_URL: https://localhost:8080
     image: riot-hil-jenkins-ci/local:latest
 
     volumes:
       - /opt/riot-hil-jenkins-ci-secrets/local:/run/secrets
-      - local_jenkins_home:/var/jenkins_home
     ports:
       - "8080:8080"
