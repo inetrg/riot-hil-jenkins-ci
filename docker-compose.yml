@@ -9,6 +9,7 @@ services:
         GITHUB_REPO_OWNER: ${GITHUB_REPO_OWNER}
         GITHUB_CI_USERNAME: ${GITHUB_CI_USERNAME}
         JENKINS_PREFIX: ${JENKINS_PREFIX}
+        CASC_ENV: live
     image: riot-hil-jenkins-ci/${IMAGE_NAME}:${IMAGE_TAG}
     volumes:
       - /opt/riot-hil-jenkins-ci-secrets/riot-staging-hil:/run/secrets

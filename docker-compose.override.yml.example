@@ -7,6 +7,9 @@ volumes:
 
 services:
   jenkins:
+    build:
+      args:
+        CASC_ENV: local
     volumes:
       # - /path/to/local/secrets:/run/secrets
       - local_jenkins_home:/var/jenkins_home
