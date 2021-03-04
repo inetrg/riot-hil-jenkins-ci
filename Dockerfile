@@ -1,5 +1,15 @@
 FROM jenkins/jenkins:2.263.4-lts
 
+USER root
+
+RUN apt-get update && apt-get install -y \
+    xsltproc \
+    python3 \
+    python3-pip \
+    python3-setuptools
+
+USER jenkins
+
 ENV JAVA_OPTS -Djenkins.install.runSetupWizard=false
 ENV CASC_JENKINS_CONFIG /var/casc_configs
 
@@ -38,13 +48,3 @@ COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
 RUN /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt
 
 COPY casc_configs /var/casc_configs
-
-USER root
-
-RUN apt-get update && apt-get install -y \
-    xsltproc \
-    python3 \
-    python3-pip \
-    python3-setuptools
-
-USER jenkins
