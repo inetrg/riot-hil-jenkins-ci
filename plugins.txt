@@ -18,3 +18,5 @@ simple-theme-plugin
 job-dsl
 label-linked-jobs
 timestamper
+pipeline-utility-steps
+email-ext
