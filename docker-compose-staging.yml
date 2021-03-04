@@ -1,5 +1,8 @@
 version: "3.3"
 
+volumes:
+  staging_jenkins_home:
+
 services:
   jenkins:
     build:
@@ -9,9 +12,11 @@ services:
         GITHUB_REPO_OWNER: riot-hil-bot
         GITHUB_CI_USERNAME: riot-hil-bot
         JENKINS_PREFIX: staging-hil
+        JENKINS_URL: https://ci.riot-os.org/staging-hil/
     image: riot-hil-jenkins-ci/staging:latest
 
     volumes:
       - /opt/riot-hil-jenkins-ci-secrets/riot-staging-hil:/run/secrets
+      - staging_jenkins_home:/var/jenkins_home
     ports:
       - "8081:8080"
