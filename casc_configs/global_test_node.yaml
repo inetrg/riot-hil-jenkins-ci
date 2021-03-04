@@ -2,7 +2,7 @@ jenkins:
   nodes:
   - permanent:
       numExecutors: 1
-      labelString: "HIL esp8266-esp-12x raspbian"
+      labelString: "HIL nrf52840dk raspbian"
       launcher:
         ssh:
           credentialsId: "jenkins_master_ssh"
@@ -15,7 +15,7 @@ jenkins:
       - envVars:
           env:
           - key: "BOARD"
-            value: "esp8266-esp-12x"
+            value: "nrf52840dk"
           - key: "GIT_CACHE_PATH"
             value: "/opt/riot-scripts/"
           - key: "MAKE"
