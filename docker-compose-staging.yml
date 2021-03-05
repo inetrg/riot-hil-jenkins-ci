@@ -11,6 +11,7 @@ services:
         GITHUB_OAUTH_CLIENT_ID: e094c0b91f5b47c8b6f0
         GITHUB_REPO_OWNER: riot-hil-bot
         GITHUB_CI_USERNAME: riot-hil-bot
+        CASC_ENV: staging
         JENKINS_PREFIX: staging-hil
         JENKINS_URL: https://ci.riot-os.org/staging-hil/
     image: riot-hil-jenkins-ci/staging:latest
