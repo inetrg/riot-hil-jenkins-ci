@@ -1,0 +1,23 @@
+version: "3.3"
+
+volumes:
+  prod_jenkins_home:
+
+services:
+  jenkins:
+    build:
+      context: .
+      args:
+        GITHUB_OAUTH_CLIENT_ID: a1e0370dd057128933eb
+        GITHUB_REPO_OWNER: RIOT-OS
+        GITHUB_CI_USERNAME: riot-ci
+        CASC_ENV: prod
+        JENKINS_PREFIX: hil
+        JENKINS_URL: https://ci.riot-os.org/hil/
+    image: riot-hil-jenkins-ci/prod:latest
+
+    volumes:
+      - /opt/riot-hil-jenkins-ci-secrets/riot-hil:/run/secrets
+      - prod_jenkins_home:/var/jenkins_home
+    ports:
+      - "8080:8080"
