@@ -43,9 +43,16 @@ credentials:
               scope: GLOBAL
               id: github_token
               username: "${GITHUB_CI_USERNAME}"
-              description: "Secret token for github account access ${readFile:${SECRETS}/github_tokens/repo_token}"
+              description: "Secret token for github account access"
               password: "${readFile:${SECRETS}/github_tokens/repo_token}"
+          - string:
+              scope: GLOBAL
+              id: github
+              description: "Deprecated credential"
+              secret: "${readFile:${SECRETS}/github_tokens/repo_token}"
 
 unclassified:
   location:
     url: "${JENKINS_URL}"
+  gitHubConfiguration:
+    apiRateLimitChecker: ThrottleOnOver

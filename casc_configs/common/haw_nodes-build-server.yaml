@@ -1,0 +1,56 @@
+jenkins:
+  nodes:
+  - permanent:
+      numExecutors: 1
+      labelString: "riot_build"
+      launcher:
+        ssh:
+          credentialsId: "jenkins_master_ssh"
+          host: "mobi15.inet.haw-hamburg.de"
+          port: 22
+          sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+      name: "mobi15"
+      nodeDescription: "RIOT build server"
+      nodeProperties:
+      - envVars:
+          env:
+          - key: "GIT_CACHE_PATH"
+            value: "/opt/riot-scripts/"
+      remoteFS: "/srv/jenkins-slave/"
+      retentionStrategy: "always"
+  - permanent:
+      numExecutors: 1
+      labelString: "riot_build"
+      launcher:
+        ssh:
+          credentialsId: "jenkins_master_ssh"
+          host: "mobi36.inet.haw-hamburg.de"
+          port: 22
+          sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+      name: "mobi36"
+      nodeDescription: "RIOT build server"
+      nodeProperties:
+      - envVars:
+          env:
+          - key: "GIT_CACHE_PATH"
+            value: "/opt/riot-scripts/"
+      remoteFS: "/srv/jenkins-slave/"
+      retentionStrategy: "always"
+  - permanent:
+      numExecutors: 1
+      labelString: "riot_build"
+      launcher:
+        ssh:
+          credentialsId: "jenkins_master_ssh"
+          host: "mobi39.inet.haw-hamburg.de"
+          port: 22
+          sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+      name: "mobi39"
+      nodeDescription: "RIOT build server"
+      nodeProperties:
+      - envVars:
+          env:
+          - key: "GIT_CACHE_PATH"
+            value: "/opt/riot-scripts/"
+      remoteFS: "/srv/jenkins-slave/"
+      retentionStrategy: "always"

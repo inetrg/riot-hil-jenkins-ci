@@ -31,6 +31,8 @@ This can be set to your repo for testing purposes.
 
 - `JENKINS_PREFIX`: The prefix to the root of the webserver.
 
+- `CASC_ENV`: Selects the additional configs to add, for example, `prod` brings in all the production nodes.
+
 ## Secrets
 The default location of the secrets directory is `/opt/riot-hil-jenkins-ci-secrets/`.
 This can be overridden if needed when running the docker container but is needed for `docker-compose`.
@@ -60,7 +62,7 @@ See [Github OAuth](https://docs.github.com/en/free-pro-team@latest/developers/ap
 To test changes to the CI locally the [docker_compose_local.yml](docker_compose_local.yml) can be used with:
 
 ```
-docker-compose -f docker-compose-local.yml up
+docker-compose up
 ```
 
 Then check `localhost:8080` in your browser.
@@ -76,6 +78,10 @@ This should be used with caution as other instances may be connecting and using 
 Staging should be use to test things before deploying and should be run on the HAW CI server.
 This means that it should have access to all the nodes.
 The only difference is that uses a different url and uses the [RobotFW-tests](https://github.com/riot-hil-bot/RobotFW-tests) from [riot-hil-bot](https://github.com/riot-hil-bot).
+
+```
+docker-compose -f docker-compose.staging.yml up
+```
 
 Note that this keeps a named volume in `users/docker/volumes/staging_jenkins_home`
 
@@ -103,7 +109,4 @@ docker run -d -v hil_jenkins_home:/var/jenkins_home -p 8080:8080 -p 50000:50000 
 
 # TODO
 
-- Setup the global test node
-- verify the ssh keys
-- determine what will be done for the proper deployment
 - update the names to use the new subdomain
