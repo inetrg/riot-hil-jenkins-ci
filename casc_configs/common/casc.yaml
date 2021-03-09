@@ -16,6 +16,10 @@ jenkins:
         - "Overall/Administer:${ADMIN_2}"
         - "Overall/Read:authenticated"
         - "Overall/Read:anonymous"
+        - "Job/Read:anonymous"
+        - "Job/Read:authenticated"
+        - "View/Read:anonymous"
+        - "View/Read:authenticated"
   remotingSecurity:
     enabled: true
 

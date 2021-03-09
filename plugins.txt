@@ -20,3 +20,4 @@ label-linked-jobs
 timestamper
 pipeline-utility-steps
 email-ext
+parameterized-scheduler
