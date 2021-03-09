@@ -65,6 +65,12 @@ To test changes to the CI locally the [docker_compose_local.yml](docker_compose_
 docker-compose up
 ```
 
+To rebuild an image to ensure testing is correct use:
+```
+docker-compose build --no-cache
+docker-compose up --force-recreate
+```
+
 Then check `localhost:8080` in your browser.
 
 This requires the secrets to be available and in a known directory.
@@ -85,10 +91,22 @@ docker-compose -f docker-compose.staging.yml up
 
 Note that this keeps a named volume in `users/docker/volumes/staging_jenkins_home`
 
-## Deploying
+The volume may need to be removed for full testing
+```
+docker volume rm <staging_volume>
+```
 
-TODO
+## Deploying Production
 
+Make sure the archive is backed up `jenkins_home/_data/jobs/`
+
+```
+docker-compose -f docker-compose.prod.yml up
+```
+
+## Backing Up Old Test Archives
+
+Jenkins keeps the archives in `jenkins_home/_data/jobs/`, this must be copied before anything that may delete it.
 
 ## Useful notes
 
@@ -101,6 +119,8 @@ TODO
 docker run -d -v hil_jenkins_home:/var/jenkins_home -p 8080:8080 -p 50000:50000 --env JENKINS_OPTS="--prefix=/hil" --restart always --name riot-hil-jenkins jenkins/jenkins:lts
 ```
 - Jenkins home location: `users/docker/volumes/hil_jenkins_home/`
+- To copy all artifacts to staging use `/bin/cp -r /users/docker/volumes/hil_jenkins_home/_data/jobs/RIOT-HIL/* /users/docker/volumes/riot-hil-jenkins-ci_staging_jenkins_home/_data/jobs/RIOT-HIL -f`
+  - Some old outdated data such as old workflows may be imported and can be discarded
 
 ## Known Issues
 - It seems that reading the `github_tokens/repo_token` has a problem and is not reading correctly, entering the token manually seems to work
@@ -110,3 +130,5 @@ docker run -d -v hil_jenkins_home:/var/jenkins_home -p 8080:8080 -p 50000:50000 
 # TODO
 
 - update the names to use the new subdomain
+- Use FS mounted volume for production to prevent accidental deleting of named volumes
+- Expose the archive volume separate since it will be shared
