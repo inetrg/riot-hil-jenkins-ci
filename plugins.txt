@@ -21,3 +21,4 @@ timestamper
 pipeline-utility-steps
 email-ext
 parameterized-scheduler
+groovy

@@ -8,18 +8,6 @@ jenkins:
       clientID: "${GITHUB_OAUTH_CLIENT_ID}"
       clientSecret: "${readFile:${SECRETS}/github_oauth/client_secrets}"
       oauthScopes: "read:org,user:email"
-  authorizationStrategy:
-    globalMatrix:
-      permissions:
-        - "Overall/Administer:${ADMIN_0}"
-        - "Overall/Administer:${ADMIN_1}"
-        - "Overall/Administer:${ADMIN_2}"
-        - "Overall/Read:authenticated"
-        - "Overall/Read:anonymous"
-        - "Job/Read:anonymous"
-        - "Job/Read:authenticated"
-        - "View/Read:anonymous"
-        - "View/Read:authenticated"
   remotingSecurity:
     enabled: true
 
