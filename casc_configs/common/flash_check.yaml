@@ -1,0 +1,13 @@
+jobs:
+  - script: >
+      pipelineJob('flash_check') {
+        triggers {
+          cron("H 23 * * *")
+        }
+        definition {
+          cps {
+            sandbox()
+            script("""${readFile:/var/job_scripts/flash_check/job.groovy}""")
+          }
+        }
+      }
