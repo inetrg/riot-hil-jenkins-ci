@@ -51,4 +51,5 @@ COPY plugins.txt /usr/share/jenkins/ref/plugins.txt
 RUN /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt
 
 COPY casc_configs/common "casc_configs/${CASC_ENV}" "${CASC_JENKINS_CONFIG}/"
+COPY job_scripts /var/job_scripts
 
