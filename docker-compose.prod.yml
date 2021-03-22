@@ -4,7 +4,7 @@ volumes:
   prod_jenkins_home:
 
 services:
-  jenkins:
+  jenkins_prod:
     build:
       context: .
       args:

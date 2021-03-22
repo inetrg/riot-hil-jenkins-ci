@@ -1,0 +1,19 @@
+jobs:
+  - script: >
+      pipelineJob('nightly') {
+        triggers {
+          cron("H 23 * * *")
+        }
+        parameters {
+          stringParam('HIL_BOARDS', 'all', '')
+          stringParam('HIL_TESTS', 'all', '')
+          stringParam('RF_OWNER', '${GITHUB_REPO_OWNER}', '')
+          stringParam('RIOT_OWNER', 'RIOT-OS', '')
+        }
+        definition {
+          cps {
+            sandbox()
+            script("//TODO: Copy script from job_scripts")
+          }
+        }
+      }

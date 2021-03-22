@@ -1,7 +1,3 @@
-// Note: When creating this with jobdsl and casc the dollar sign variables
-// Require some special love, a backslash dollar sign and a backslash newline
-// is needed it appears...
-
 nodes = nodesByLabel('HIL')
 nodeBoards = []
 
@@ -22,8 +18,7 @@ pipeline {
         }
         stage('node test') {
             steps {
-                runParallel items: nodeBoards.collect { "\$\
-{it}" }
+                runParallel items: nodeBoards.collect { "${it}" }
             }
         }
     }
@@ -31,12 +26,10 @@ pipeline {
 }
 
 def runParallel(args) {
-    parallel args.items.collectEntries { name -> [ "\$\
-{name}": {
+    parallel args.items.collectEntries { name -> [ "${name}": {
 
         node (name) {
-            stage("\$\
-{name}") {
+            stage("${name}") {
                 /* We want to timeout a node if it doesn't respond
                  * The timeout should only start once it is acquired
                  */

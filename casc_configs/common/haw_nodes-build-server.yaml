@@ -15,7 +15,7 @@ jenkins:
       - envVars:
           env:
           - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
+            value: "/opt/git-cache/"
       remoteFS: "/srv/jenkins-slave/"
       retentionStrategy: "always"
   - permanent:
@@ -33,7 +33,7 @@ jenkins:
       - envVars:
           env:
           - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
+            value: "/opt/git-cache/"
       remoteFS: "/srv/jenkins-slave/"
       retentionStrategy: "always"
   - permanent:
@@ -51,6 +51,6 @@ jenkins:
       - envVars:
           env:
           - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
+            value: "/opt/git-cache/"
       remoteFS: "/srv/jenkins-slave/"
       retentionStrategy: "always"

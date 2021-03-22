@@ -30,6 +30,8 @@ jenkins:
             value: "python3 -m philip_pal --dut_reset"
           - key: "RESET_FLAGS"
             value: "/dev/hil/philip"
+          - key: "RIOTBASE"
+            value: "/opt/RIOT"
       remoteFS: "/opt/jenkins"
       retentionStrategy: "always"
   - permanent:
@@ -66,6 +68,8 @@ jenkins:
             value: "python3 -m philip_pal --dut_reset"
           - key: "RESET_FLAGS"
             value: "/dev/hil/philip"
+          - key: "RIOTBASE"
+            value: "/opt/RIOT"
       remoteFS: "/opt/jenkins"
       retentionStrategy: "always"
   - permanent:
@@ -100,6 +104,8 @@ jenkins:
             value: "/dev/hil/philip"
           - key: "OPENOCD_RESET_USE_CONNECT_ASSERT_SRST"
             value: "1"
+          - key: "RIOTBASE"
+            value: "/opt/RIOT"
       remoteFS: "/opt/jenkins"
       retentionStrategy: "always"
   - permanent:
@@ -134,5 +140,7 @@ jenkins:
             value: "/dev/hil/philip"
           - key: "OPENOCD_RESET_USE_CONNECT_ASSERT_SRST"
             value: "1"
+          - key: "RIOTBASE"
+            value: "/opt/RIOT"
       remoteFS: "/opt/jenkins"
       retentionStrategy: "always"

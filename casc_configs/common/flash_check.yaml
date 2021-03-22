@@ -2,12 +2,12 @@ jobs:
   - script: >
       pipelineJob('flash_check') {
         triggers {
-          cron("H 23 * * *")
+          cron("H 22 * * *")
         }
         definition {
           cps {
             sandbox()
-            script("""${readFile:/var/job_scripts/flash_check/job.groovy}""")
+            script("//TODO: Copy script from job_scripts")
           }
         }
       }

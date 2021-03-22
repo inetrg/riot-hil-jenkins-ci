@@ -24,6 +24,8 @@ jenkins:
             value: "/dev/hil/philip"
           - key: "PORT"
             value: "/dev/hil/dut"
+          - key: "RIOTBASE"
+            value: "/opt/RIOT"
       remoteFS: "/opt/jenkins"
       retentionStrategy: "always"
   - permanent:
@@ -58,6 +60,8 @@ jenkins:
             value: "python3 -m philip_pal --dut_reset"
           - key: "RESET_FLAGS"
             value: "/dev/hil/philip"
+          - key: "RIOTBASE"
+            value: "/opt/RIOT"
       remoteFS: "/opt/jenkins"
       retentionStrategy: "always"
   - permanent:
@@ -90,6 +94,8 @@ jenkins:
             value: "python3 -m philip_pal --dut_reset"
           - key: "RESET_FLAGS"
             value: "/dev/hil/philip"
+          - key: "RIOTBASE"
+            value: "/opt/RIOT"
       remoteFS: "/opt/jenkins"
       retentionStrategy: "always"
   - permanent:
@@ -122,6 +128,8 @@ jenkins:
             value: "python3 -m philip_pal --dut_reset"
           - key: "RESET_FLAGS"
             value: "/dev/hil/philip"
+          - key: "RIOTBASE"
+            value: "/opt/RIOT"
       remoteFS: "/opt/jenkins"
       retentionStrategy: "always"
   - permanent:
@@ -154,5 +162,77 @@ jenkins:
             value: "python3 -m philip_pal --dut_reset"
           - key: "RESET_FLAGS"
             value: "/dev/hil/philip"
+          - key: "RIOTBASE"
+            value: "/opt/RIOT"
+      remoteFS: "/opt/jenkins"
+      retentionStrategy: "always"
+  - permanent:
+      numExecutors: 1
+      labelString: "HIL z1 raspbian"
+      launcher:
+        ssh:
+          credentialsId: "jenkins_master_ssh"
+          host: "10.28.48.46"
+          port: 22
+          sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+      name: "r4p6"
+      nodeDescription: "The node in position 6 of rack 4 in the HiL Server Room"
+      nodeProperties:
+      - envVars:
+          env:
+          - key: "BOARD"
+            value: "z1"
+          - key: "GIT_CACHE_PATH"
+            value: "/opt/riot-scripts/"
+          - key: "HIL_RESET_WAIT"
+            value: 0
+          - key: "MAKE"
+            value: "make"
+          - key: "PHILIP_PORT"
+            value: "/dev/hil/philip"
+          - key: "PORT"
+            value: "/dev/hil/dut"
+          - key: "RESET"
+            value: "python3 -m philip_pal --dut_reset"
+          - key: "RESET_FLAGS"
+            value: "/dev/hil/philip"
+          - key: "RIOTBASE"
+            value: "/opt/RIOT"
+      remoteFS: "/opt/jenkins"
+      retentionStrategy: "always"
+  - permanent:
+      numExecutors: 1
+      labelString: "HIL slstk3400a raspbian"
+      launcher:
+        ssh:
+          credentialsId: "jenkins_master_ssh"
+          host: "10.28.48.47"
+          port: 22
+          sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+      name: "r4p7"
+      nodeDescription: "The node in position 7 of rack 4 in the HiL Server Room"
+      nodeProperties:
+      - envVars:
+          env:
+          - key: "BOARD"
+            value: "slstk3400a"
+          - key: "GIT_CACHE_PATH"
+            value: "/opt/riot-scripts/"
+          - key: "HIL_RESET_WAIT"
+            value: 0
+          - key: "PERIPH_TIMER_HZ"
+            value: 250000
+          - key: "MAKE"
+            value: "make"
+          - key: "PHILIP_PORT"
+            value: "/dev/hil/philip"
+          - key: "PORT"
+            value: "/dev/hil/dut"
+          - key: "RESET"
+            value: "python3 -m philip_pal --dut_reset"
+          - key: "RESET_FLAGS"
+            value: "/dev/hil/philip"
+          - key: "RIOTBASE"
+            value: "/opt/RIOT"
       remoteFS: "/opt/jenkins"
       retentionStrategy: "always"
