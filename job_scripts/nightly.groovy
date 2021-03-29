@@ -425,6 +425,8 @@ def stepTest(test)
             catchInterruptions: false) {
         sh script: "make -C ${test} robot-test",
                 label: "Run ${test} test"
+        sh script: "make -C ${test} robot-html || true",
+                label: "Generate ${test} results"
     }
 }
 
@@ -433,7 +435,7 @@ def stepArchiveTestResults(test)
 {
     def test_name = test.replaceAll('/', '_')
     def base_dir = "build/robot/${env.BOARD}/${test_name}/"
-    archiveArtifacts artifacts: "${base_dir}*.xml",
+    archiveArtifacts artifacts: "${base_dir}*.xml,${base_dir}*.html,${base_dir}*.html,${base_dir}includes/*.html",
             allowEmptyArchive: true
     junit testResults: "${base_dir}xunit.xml", allowEmptyResults: true
 }
