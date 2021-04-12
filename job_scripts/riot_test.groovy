@@ -13,6 +13,8 @@ import jenkins.model.*
 def getNodes(String label) {
     jenkins.model.Jenkins.instance.nodes.collect { thisAgent ->
         if (thisAgent.labelString.contains("${label}")) {
+        // this works too
+        // if (thisAagent.labelString == "${label}") {
             return thisAgent.name
         }
     }
@@ -34,15 +36,10 @@ pipeline {
     stages {
         stage('setup master') {
             steps {
-                stepCheckoutRobotFWTests()
-                stepCheckoutRobotFWFrontend()
                 stepCheckoutRIOT()
-
                 stepGetBoards()
                 stepGetTests()
-                stepArchiveMetadata()
-
-                stepStashRobotFWTests()
+                stepStashRIOT()
             }
         }
         stage('setup build server and build') {
@@ -58,68 +55,71 @@ pipeline {
                 runParallel items: nodeBoards.collect { "${it}" }
             }
         }
-        stage('compile results') {
-            steps {
-                stepCompileResults()
-            }
-        }
     }
 }
 
 /* master steps ============================================================= */
 
-def stepCheckoutRobotFWTests() {
-    checkout([
-              $class: 'GitSCM',
-              branches: [[name: "refs/heads/master"]],
-              userRemoteConfigs: [[url: "https://github.com/RIOT-OS/RobotFW-tests.git",
-                                   credentialsId: 'github_token']]
-    ])
+def _get_repo_url(url, owner, repo) {
+    if (url != "") {
+        return url
+    }
+    return"https://github.com/${owner}/${repo}.git"
 }
 
-def stepCheckoutRobotFWFrontend() {
-    checkout([
-              $class: 'GitSCM',
-              branches: [[name: "refs/heads/main"]],
-              extensions: [[$class: 'RelativeTargetDirectory',
-                            relativeTargetDir: "RobotFW-frontend"]],
-              userRemoteConfigs: [[url: "https://github.com/RIOT-OS/RobotFW-frontend.git",
+def _checkout_repo(url, pr, branch, dir) {
+    if (pr != "") {
+        chk = checkout([
+            $class: 'GitSCM',
+            branches: [[name: "pr/${pr}"]],
+            extensions: [[$class: 'RelativeTargetDirectory',
+                          relativeTargetDir: dir]],
+            userRemoteConfigs: [[url: url,
+                                 refspec: "+refs/pull/${pr}/head:refs/remotes/origin/pr/${pr}",
                                  credentialsId: 'github_token']]
-            ])
+        ])
+    }
+    else if (branch != "") {
+        chk = checkout([
+            $class: 'GitSCM',
+            branches: [[name: "${branch}"]],
+            extensions: [[$class: 'RelativeTargetDirectory',
+                          relativeTargetDir: dir]],
+            userRemoteConfigs: [[url: url,
+                                 credentialsId: 'github_token']]
+        ])
+    }
+    else {
+        chk = checkout([
+            $class: 'GitSCM',
+            branches: [[name: "refs/heads/master"]],
+            extensions: [[$class: 'RelativeTargetDirectory',
+                          relativeTargetDir: dir]],
+            userRemoteConfigs: [[url: url,
+                                 credentialsId: 'github_token']]
+        ])
+    }
+    return chk.GIT_COMMIT
 }
+
 
 def stepCheckoutRIOT() {
-    checkout([
-              $class: 'GitSCM',
-              branches: [[name: "refs/heads/master"]],
-              extensions: [[$class: 'RelativeTargetDirectory',
-                            relativeTargetDir: "RIOT"]],
-              userRemoteConfigs: [[url: "https://github.com/RIOT-OS/RIOT.git",
-                                   credentialsId: 'github_token']]
-            ])
+    riotUrl = _get_repo_url("${params.RIOT_URL}",
+                            "${params.RIOT_OWNER}",
+                            "RIOT")
+
+    riotCommitId = _checkout_repo(riotUrl,
+                                  "${params.RIOT_PR}",
+                                  "${params.RIOT_BRANCH}",
+                                  ".")
 }
 
-def stepStashRobotFWTests() {
-    stash name: "RobotFWTestsRepo",
-          excludes: "RIOT/**, RobotFW-frontend/**"
+def stepStashRIOT() {
+    stash name: "RiotRepo"
 }
 
-def stepUnstashRobotFWTests() {
-    unstash name: "RobotFWTestsRepo"
-}
-
-/* Runs a script to compile all tests results in the archive. */
-def stepCompileResults()
-{
-    ret = sh script: '''
-        HIL_JOB_NAME=$(echo ${JOB_NAME}| cut -d'/' -f 1)
-        ARCHIVE_DIR=${JENKINS_HOME}/jobs/${HIL_JOB_NAME}/builds/${BUILD_NUMBER}/archive/build/robot/
-        if [ -d $ARCHIVE_DIR ]; then
-            ./dist/tools/ci/results_to_xml.sh $ARCHIVE_DIR
-            cd RobotFW-frontend
-            ./scripts/xsltprocw.sh -c ../config-live.xml -b ${HIL_JOB_NAME} -n ${BUILD_NUMBER} -v /var/jenkins_home/jobs/
-        fi
-    ''', label: "Compile archived results"
+def stepUnstashRIOT() {
+    unstash name: "RiotRepo"
 }
 
 /* node steps =============================================================== */
@@ -130,7 +130,6 @@ def stepCompileResults()
 def buildOnBuilder(String agentName, List boards) {
     node("${agentName}") {
         stage("Building on ${agentName}") {
-            stepCheckoutRobotFWTests()
             stepCheckoutRIOT()
             stepBuildJobs()
         }
@@ -170,7 +169,13 @@ def processBuilderTask() {
  * Sets nodeBoards
  */
 def stepGetBoards() {
-    nodeBoards = getBoardsFromNodesEnv()
+    if (params.HIL_BOARDS == 'all') {
+        nodeBoards = getBoardsFromNodesEnv()
+    }
+    else {
+        nodeBoards = params.HIL_BOARDS.replaceAll("\\s", "").tokenize(',')
+        /* TODO: Validate if the boards are connected */
+    }
     nodeBoardQueue = nodeBoards.clone()
     sh script: "echo collected boards: ${nodeBoards.join(",")}",
             label: "print boards"
@@ -196,23 +201,9 @@ def getBoardsFromNodesEnv() {
  * Sets nodeTests
  */
 def stepGetTests() {
-    nodeTests = getTestsFromDir()
+    nodeTests = params.HIL_TESTS.replaceAll("\\s", "").tokenize(',')
     sh script: "echo collected tests: ${nodeTests.join(",")}",
             label: "print tests"
-}
-
-/* Gets tests in tests directory. */
-def getTestsFromDir() {
-    script {
-        tests = sh returnStdout: true,
-                script: """
-                    for dir in \$(find tests -maxdepth 1 -mindepth 1 -type d); do
-                        [ -d \$dir/tests ] && { echo \$dir ; } || true
-                    done
-                """, label: "Collecting tests"
-        tests = tests.tokenize()
-        return tests
-    }
 }
 
 /* Iterates through each board in nodeBoards and test in nodeTests and builds. */
@@ -238,7 +229,7 @@ def stepBuildJobs() {
  * @param test  The test to build
  */
 def buildJob(board, test) {
-    exit_code = sh script: "RIOT_CI_BUILD=1 DOCKER_MAKE_ARGS=-j BUILD_IN_DOCKER=1 BOARD=${board} make -C ${test} clean all",
+    exit_code = sh script: "RIOT_CI_BUILD=1 DOCKER_MAKE_ARGS=-j BUILD_IN_DOCKER=1 BOARD=${board} make -C ${test} clean all ${params.EXTRA_MAKE_COMMANDS}",
         returnStatus: true,
         label: "Build BOARD=${board} TEST=${test}"
 
@@ -249,15 +240,6 @@ def buildJob(board, test) {
                 includes: "${test}/bin/${board}/*.elf,${test}/bin/${board}/*.hex,${test}/bin/${board}/*.bin"
         sh script: "echo stashed ${s_name}", label: "Stashed ${s_name}"
     }
-}
-
-/* Add metadata file to archive */
-def stepArchiveMetadata() {
-    sh script: """
-            mkdir -p build/robot
-            python3 dist/tools/ci/env_parser.py -x -g -e --output=build/robot/metadata.xml
-            """
-    archiveArtifacts artifacts: "build/robot/metadata.xml"
 }
 
 /* test node steps ========================================================== */
@@ -272,6 +254,7 @@ def runParallel(args) {
                  */
                 timeout(time: 60, unit: 'MINUTES') {
                     script {
+                        stepUnstashRIOT()
                         stepRunNodeTests()
                     }
                 }
@@ -290,9 +273,6 @@ def runParallel(args) {
 def stepRunNodeTests()
 {
     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-        stage( "${env.BOARD} setup on  ${env.NODE_NAME}"){
-            stepUnstashRobotFWTests()
-        }
         for (int i=0; i < nodeTests.size(); i++) {
             stage("${nodeTests[i]}") {
                 catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE',
@@ -303,12 +283,12 @@ def stepRunNodeTests()
                      * this */
                     stepFlash(nodeTests[i])
                     stepTest(nodeTests[i])
-                    stepArchiveTestResults(nodeTests[i])
                 }
             }
         }
     }
 }
+
 
 /* Unstashes the binaries from the build server. */
 def stepUnstashBinaries(test) {
@@ -321,29 +301,12 @@ def stepFlash(test)
     sh script: "RIOT_CI_BUILD=1 make -C ${test} flash-only", label: "Flash ${test}"
 }
 
-/* Cleans the robot test directory and runs the robot tests. */
 def stepTest(test)
 {
     def test_name = test.replaceAll('/', '_')
-    sh script: "make -C ${test} robot-clean || true",
-            label: "Cleaning before ${test} test"
-    /* We don't want to stop running other tests since the robot-test is
-     * allowed to fail */
     catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE',
             catchInterruptions: false) {
-        sh script: "make -C ${test} robot-test",
+        sh script: "make -C ${test} test",
                 label: "Run ${test} test"
-        sh script: "make -C ${test} robot-html || true",
-                label: "Generate ${test} results"
     }
-}
-
-/* Archives the test results. */
-def stepArchiveTestResults(test)
-{
-    def test_name = test.replaceAll('/', '_')
-    def base_dir = "build/robot/${env.BOARD}/${test_name}/"
-    archiveArtifacts artifacts: "${base_dir}*.xml,${base_dir}*.html,${base_dir}*.html,${base_dir}includes/*.html",
-            allowEmptyArchive: true
-    junit testResults: "${base_dir}xunit.xml", allowEmptyResults: true
 }

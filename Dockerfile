@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     python3-setuptools
 
+RUN pip3 install --no-cache-dir gitpython
+
 USER jenkins
 
 ENV JAVA_OPTS -Djenkins.install.runSetupWizard=false

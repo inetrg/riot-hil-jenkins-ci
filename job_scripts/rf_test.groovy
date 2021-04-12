@@ -27,6 +27,10 @@ collectBuilders = [:]
 nodeBoardQueue = []
 nodeBoards = []
 nodeTests = []
+rfCommitId = ""
+rfUrl = ""
+riotCommitId = ""
+riotUrl = ""
 
 /* pipeline ================================================================= */
 pipeline {
@@ -68,35 +72,71 @@ pipeline {
 
 /* master steps ============================================================= */
 
+def _get_repo_url(url, owner, repo) {
+    if (url != "") {
+        return url
+    }
+    return"https://github.com/${owner}/${repo}.git"
+}
+
+def _checkout_repo(url, pr, branch, dir) {
+    if (pr != "") {
+        chk = checkout([
+            $class: 'GitSCM',
+            branches: [[name: "pr/${pr}"]],
+            extensions: [[$class: 'RelativeTargetDirectory',
+                          relativeTargetDir: dir]],
+            userRemoteConfigs: [[url: url,
+                                 refspec: "+refs/pull/${pr}/head:refs/remotes/origin/pr/${pr}",
+                                 credentialsId: 'github_token']]
+        ])
+    }
+    else {
+        chk = checkout([
+            $class: 'GitSCM',
+            branches: [[name: "${branch}"]],
+            extensions: [[$class: 'RelativeTargetDirectory',
+                          relativeTargetDir: dir]],
+            userRemoteConfigs: [[url: url,
+                                 credentialsId: 'github_token']]
+        ])
+    }
+    return chk.GIT_COMMIT
+}
+
 def stepCheckoutRobotFWTests() {
-    checkout([
-              $class: 'GitSCM',
-              branches: [[name: "refs/heads/master"]],
-              userRemoteConfigs: [[url: "https://github.com/RIOT-OS/RobotFW-tests.git",
-                                   credentialsId: 'github_token']]
-    ])
+
+    rfUrl = _get_repo_url("${params.ROBOTFW_URL}",
+                          "${params.ROBOTFW_OWNER}",
+                          "RobotFW-tests")
+
+    rfCommitId = _checkout_repo(rfUrl,
+                                "${params.ROBOTFW_PR}",
+                                "${params.ROBOTFW_BRANCH}",
+                                ".")
 }
 
 def stepCheckoutRobotFWFrontend() {
-    checkout([
-              $class: 'GitSCM',
-              branches: [[name: "refs/heads/main"]],
-              extensions: [[$class: 'RelativeTargetDirectory',
-                            relativeTargetDir: "RobotFW-frontend"]],
-              userRemoteConfigs: [[url: "https://github.com/RIOT-OS/RobotFW-frontend.git",
-                                 credentialsId: 'github_token']]
-            ])
+    if (params.GENERATE_HTML) {
+        rfCommitId = _checkout_repo("https://github.com/RIOT-OS/RobotFW-frontend.git",
+                                    "",
+                                    "main",
+                                    "RobotFW-frontend")
+    }
+    else {
+        echo "Skipped as html is not being generated"
+    }
 }
 
 def stepCheckoutRIOT() {
-    checkout([
-              $class: 'GitSCM',
-              branches: [[name: "refs/heads/master"]],
-              extensions: [[$class: 'RelativeTargetDirectory',
-                            relativeTargetDir: "RIOT"]],
-              userRemoteConfigs: [[url: "https://github.com/RIOT-OS/RIOT.git",
-                                   credentialsId: 'github_token']]
-            ])
+    riotUrl = _get_repo_url("${params.RIOT_URL}",
+                            "${params.RIOT_OWNER}",
+                            "RIOT")
+
+    riotCommitId = _checkout_repo(riotUrl,
+                                  "${params.RIOT_PR}",
+                                  "${params.RIOT_BRANCH}",
+                                  "RIOT")
 }
 
 def stepStashRobotFWTests() {
@@ -111,15 +151,27 @@ def stepUnstashRobotFWTests() {
 /* Runs a script to compile all tests results in the archive. */
 def stepCompileResults()
 {
-    ret = sh script: '''
-        HIL_JOB_NAME=$(echo ${JOB_NAME}| cut -d'/' -f 1)
-        ARCHIVE_DIR=${JENKINS_HOME}/jobs/${HIL_JOB_NAME}/builds/${BUILD_NUMBER}/archive/build/robot/
-        if [ -d $ARCHIVE_DIR ]; then
-            ./dist/tools/ci/results_to_xml.sh $ARCHIVE_DIR
-            cd RobotFW-frontend
-            ./scripts/xsltprocw.sh -c ../config-live.xml -b ${HIL_JOB_NAME} -n ${BUILD_NUMBER} -v /var/jenkins_home/jobs/
-        fi
-    ''', label: "Compile archived results"
+    if (params.GENERATE_HTML) {
+        ret = sh script: '''
+            HIL_JOB_NAME=$(echo ${JOB_NAME}| cut -d'/' -f 1)
+            ARCHIVE_DIR=${JENKINS_HOME}/jobs/${HIL_JOB_NAME}/builds/${BUILD_NUMBER}/archive/build/robot/
+            if [ -d $ARCHIVE_DIR ]; then
+                ./dist/tools/ci/results_to_xml.sh $ARCHIVE_DIR
+                cd RobotFW-frontend
+                ./scripts/xsltprocw.sh -c ../config-live.xml -b ${HIL_JOB_NAME} -n ${BUILD_NUMBER} -v /var/jenkins_home/jobs/
+            fi
+        ''', label: "Compile archived results"
+    }
+    else {
+        ret = sh script: '''
+            HIL_JOB_NAME=$(echo ${JOB_NAME}| cut -d'/' -f 1)
+            ARCHIVE_DIR=${JENKINS_HOME}/jobs/${HIL_JOB_NAME}/builds/${BUILD_NUMBER}/archive/build/robot/
+            if [ -d $ARCHIVE_DIR ]; then
+                ./dist/tools/ci/results_to_xml.sh $ARCHIVE_DIR
+            fi
+        ''', label: "Compile archived results"
+    }
+
 }
 
 /* node steps =============================================================== */
@@ -170,7 +222,13 @@ def processBuilderTask() {
  * Sets nodeBoards
  */
 def stepGetBoards() {
-    nodeBoards = getBoardsFromNodesEnv()
+    if (params.HIL_BOARDS == 'all') {
+        nodeBoards = getBoardsFromNodesEnv()
+    }
+    else {
+        nodeBoards = params.HIL_BOARDS.replaceAll("\\s", "").tokenize(',')
+        /* TODO: Validate if the boards are connected */
+    }
     nodeBoardQueue = nodeBoards.clone()
     sh script: "echo collected boards: ${nodeBoards.join(",")}",
             label: "print boards"
@@ -196,7 +254,13 @@ def getBoardsFromNodesEnv() {
  * Sets nodeTests
  */
 def stepGetTests() {
-    nodeTests = getTestsFromDir()
+    if (params.HIL_TESTS == 'all') {
+        nodeTests = getTestsFromDir()
+    }
+    else {
+        nodeTests = params.HIL_TESTS.replaceAll("\\s", "").tokenize(',')
+    }
+
     sh script: "echo collected tests: ${nodeTests.join(",")}",
             label: "print tests"
 }
@@ -238,7 +302,7 @@ def stepBuildJobs() {
  * @param test  The test to build
  */
 def buildJob(board, test) {
-    exit_code = sh script: "RIOT_CI_BUILD=1 DOCKER_MAKE_ARGS=-j BUILD_IN_DOCKER=1 BOARD=${board} make -C ${test} clean all",
+    exit_code = sh script: "RIOT_CI_BUILD=1 DOCKER_MAKE_ARGS=-j BUILD_IN_DOCKER=1 BOARD=${board} make -C ${test} clean all ${params.EXTRA_MAKE_COMMANDS}",
         returnStatus: true,
         label: "Build BOARD=${board} TEST=${test}"
 
@@ -333,8 +397,10 @@ def stepTest(test)
             catchInterruptions: false) {
         sh script: "make -C ${test} robot-test",
                 label: "Run ${test} test"
-        sh script: "make -C ${test} robot-html || true",
-                label: "Generate ${test} results"
+        if (params.GENERATE_HTML) {
+            sh script: "make -C ${test} robot-html || true",
+                    label: "Generate ${test} results"
+        }
     }
 }
 

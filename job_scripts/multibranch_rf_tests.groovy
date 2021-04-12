@@ -35,7 +35,6 @@ pipeline {
         stage('setup master') {
             steps {
                 stepCheckoutRobotFWTests()
-                stepCheckoutRobotFWFrontend()
                 stepCheckoutRIOT()
 
                 stepGetBoards()
@@ -77,17 +76,6 @@ def stepCheckoutRobotFWTests() {
     ])
 }
 
-def stepCheckoutRobotFWFrontend() {
-    checkout([
-              $class: 'GitSCM',
-              branches: [[name: "refs/heads/main"]],
-              extensions: [[$class: 'RelativeTargetDirectory',
-                            relativeTargetDir: "RobotFW-frontend"]],
-              userRemoteConfigs: [[url: "https://github.com/RIOT-OS/RobotFW-frontend.git",
-                                 credentialsId: 'github_token']]
-            ])
-}
-
 def stepCheckoutRIOT() {
     checkout([
               $class: 'GitSCM',
@@ -112,12 +100,14 @@ def stepUnstashRobotFWTests() {
 def stepCompileResults()
 {
     ret = sh script: '''
-        HIL_JOB_NAME=$(echo ${JOB_NAME}| cut -d'/' -f 1)
-        ARCHIVE_DIR=${JENKINS_HOME}/jobs/${HIL_JOB_NAME}/builds/${BUILD_NUMBER}/archive/build/robot/
+HIL_JOB_NAME=$(echo ${JOB_NAME}| cut -d'/' -f 1)
+        HIL_BRANCH_NAME=$(echo $JOB_NAME| cut -d'/' -f 2)
+        HIL_BRANCH_NAME=$(echo $HIL_BRANCH_NAME | sed 's/%2F/-/g')
+        HIL_BRANCH_NAME=$(echo $HIL_BRANCH_NAME | sed 's/_/-/g')
+        HIL_BRANCH_NAME=$(ls ${JENKINS_HOME}/jobs/${HIL_JOB_NAME}/branches/ | grep "^$HIL_BRANCH_NAME")
+        ARCHIVE_DIR=${JENKINS_HOME}/jobs/${HIL_JOB_NAME}/branches/${HIL_BRANCH_NAME}/builds/${BUILD_NUMBER}/archive/build/robot/
         if [ -d $ARCHIVE_DIR ]; then
             ./dist/tools/ci/results_to_xml.sh $ARCHIVE_DIR
-            cd RobotFW-frontend
-            ./scripts/xsltprocw.sh -c ../config-live.xml -b ${HIL_JOB_NAME} -n ${BUILD_NUMBER} -v /var/jenkins_home/jobs/
         fi
     ''', label: "Compile archived results"
 }
@@ -333,8 +323,6 @@ def stepTest(test)
             catchInterruptions: false) {
         sh script: "make -C ${test} robot-test",
                 label: "Run ${test} test"
-        sh script: "make -C ${test} robot-html || true",
-                label: "Generate ${test} results"
     }
 }
 
@@ -343,7 +331,6 @@ def stepArchiveTestResults(test)
 {
     def test_name = test.replaceAll('/', '_')
     def base_dir = "build/robot/${env.BOARD}/${test_name}/"
-    archiveArtifacts artifacts: "${base_dir}*.xml,${base_dir}*.html,${base_dir}*.html,${base_dir}includes/*.html",
-            allowEmptyArchive: true
+    archiveArtifacts artifacts: "${base_dir}*.xml", allowEmptyArchive: true
     junit testResults: "${base_dir}xunit.xml", allowEmptyResults: true
 }
