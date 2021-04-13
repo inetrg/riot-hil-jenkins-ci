@@ -24,5 +24,7 @@ jenkins:
             value: "/dev/hil/philip"
           - key: "PORT"
             value: "/dev/hil/dut"
+          - key: "RIOTBASE"
+            value: "/opt/RIOT"
       remoteFS: "/opt/jenkins"
       retentionStrategy: "always"

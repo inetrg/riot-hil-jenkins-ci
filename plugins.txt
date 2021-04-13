@@ -22,3 +22,5 @@ pipeline-utility-steps
 email-ext
 parameterized-scheduler
 groovy
+pipeline-multibranch-defaults
+inline-pipeline

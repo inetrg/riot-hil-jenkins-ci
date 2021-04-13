@@ -16,6 +16,15 @@ security:
     authenticators:
     - global:
         strategy: triggeringUsersAuthorizationStrategy
+  scriptApproval:
+    approvedSignatures:
+    - field hudson.model.Slave name
+    - method hudson.model.AbstractCIBase getNodes
+    - method hudson.model.Computer isOnline
+    - method hudson.model.Node getLabelString
+    - method hudson.model.Node toComputer
+    - method jenkins.model.Jenkins getNode java.lang.String
+    - staticMethod jenkins.model.Jenkins getInstance
 
 
 credentials:

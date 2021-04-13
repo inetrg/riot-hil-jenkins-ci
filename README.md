@@ -58,6 +58,16 @@ This is used for scanning and api calls to the RobotFW-Tests and RIOT repos
 This should be paired with the `GITHUB_CI_USERNAME` parameter.
 See [Github OAuth](https://docs.github.com/en/free-pro-team@latest/developers/apps/authorizing-oauth-apps#localhost-redirect-urls) for more info
 
+## Manual Steps
+
+There are a few manual steps needed as autmation of these are a challenge.
+
+1. The token (secret text and username/passwords) credentials must be manually
+copied as the readfile functionality seems to struggle and using envs are not
+deemed safe.
+2. The job scripts must be copied in as the escape characters really adds up,
+check the `job_scripts` directory.
+
 ## Local testing
 To test changes to the CI locally the [docker_compose_local.yml](docker_compose_local.yml) can be used with:
 
