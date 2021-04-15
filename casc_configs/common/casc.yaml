@@ -26,7 +26,6 @@ security:
     - method jenkins.model.Jenkins getNode java.lang.String
     - staticMethod jenkins.model.Jenkins getInstance
 
-
 credentials:
   system:
     domainCredentials:
