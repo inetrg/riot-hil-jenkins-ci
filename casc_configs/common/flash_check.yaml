@@ -1,6 +1,7 @@
 jobs:
   - script: >
       pipelineJob('flash_check') {
+        concurrentBuild(false)
         triggers {
           cron("H 22 * * *")
         }

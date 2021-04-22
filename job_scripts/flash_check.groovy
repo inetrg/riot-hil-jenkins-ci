@@ -1,4 +1,6 @@
 nodes = nodesByLabel('HIL')
+TEST = "tests/sched_testing"
+
 
 pipeline {
     agent { label 'master' }
@@ -39,7 +41,7 @@ def stepBuildJobs() {
                     userRemoteConfigs: [[url: "https://github.com/RIOT-OS/RIOT.git",
                                         credentialsId: 'github_token']]
                 ])
-                buildJob(board, "tests/shell")
+                buildJob(board, TEST)
             }
         }
     }
@@ -68,7 +70,7 @@ def runParallel(args) {
                 /* We want to timeout a node if it doesn't respond
                  * The timeout should only start once it is acquired
                  */
-                timeout(time: 60, unit: 'MINUTES') {
+                timeout(time: 3, unit: 'MINUTES') {
                     script {
                         stepRunNodeTests()
                     }
@@ -86,7 +88,7 @@ def stepRunNodeTests()
             def timeout_stop_exc = null
             catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE',
                     catchInterruptions: false) {
-                stepUnstashBinaries("tests/shell")
+                stepUnstashBinaries(TEST)
                 stepFlashAndTest()
             }
         }
@@ -95,12 +97,28 @@ def stepRunNodeTests()
 
 def stepUnstashBinaries(test) {
     unstash name: "${env.BOARD}_${test.replace("/", "_")}"
-    sh script: "rsync -a tests/shell/ /opt/RIOT/tests/shell/"
+    sh script: "rsync -a ${TEST}/ /opt/RIOT/${TEST}/"
 }
 
 def stepFlashAndTest()
 {
-    exit_code = sh script: "make flash-only test -C /opt/RIOT/tests/shell", returnStatus:true
+    exit_code = sh script: "make flash-only test -C /opt/RIOT/${TEST}", returnStatus:true
+    if (exit_code == 0) {
+        return
+    }
+    sh script: """
+        gpio -p mode 23 out
+        gpio -p write 23 0
+        echo '1-1' | sudo tee /sys/bus/usb/drivers/usb/unbind
+        sleep 3
+    """, returnStatus:true
+    sh script: "echo '1-1' | sudo tee /sys/bus/usb/drivers/usb/bind", returnStatus:true
+    sh script: """
+        gpio -p write 23 1
+        gpio -p mode 23 in
+        sleep 1
+    """, returnStatus:true
+    exit_code = sh script: "make flash-only test -C /opt/RIOT/${TEST}", returnStatus:true
     if (exit_code != 0) {
         sh script: "sudo reboot"
     }

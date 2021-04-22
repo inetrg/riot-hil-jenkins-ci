@@ -69,11 +69,16 @@ def _get_repo_url(url, owner, repo) {
 
 def _checkout_repo(url, pr, branch, dir) {
     if (pr != "") {
+        sh 'git config --global user.name "riot-hil-bot"'
+        sh 'git config --global user.email "riot-hil-bot@haw-hamburg.de"'
         chk = checkout([
             $class: 'GitSCM',
             branches: [[name: "pr/${pr}"]],
             extensions: [[$class: 'RelativeTargetDirectory',
-                          relativeTargetDir: dir]],
+                          relativeTargetDir: dir],
+                         [$class: "PreBuildMerge",
+                          options: [mergeTarget: "master",
+                                    mergeRemote: "origin"]]],
             userRemoteConfigs: [[url: url,
                                  refspec: "+refs/pull/${pr}/head:refs/remotes/origin/pr/${pr}",
                                  credentialsId: 'github_token']]
@@ -127,7 +132,7 @@ def stepUnstashRIOT() {
  * rfCommitId, riotUrl, and riotCommitId in the node workspace.
  */
 
-def buildOnBuilder(String agentName, List boards) {
+def buildOnBuilder(String agentName) {
     node("${agentName}") {
         stage("Building on ${agentName}") {
             stepCheckoutRIOT()
@@ -146,19 +151,12 @@ def processBuilderTask() {
         }
     }
 
-    int col_val = nodeBoards.size() / builders.size()
-    if (nodeBoards.size() % builders.size()) {
-        col_val++
-    }
-    def split_boards = nodeBoards.collate(col_val)
-
     for(i=0; i < builders.size(); i++) {
         def agentName = nodeList[i]
-        def boards = split_boards[i]
         // skip the null entries in the nodeList
-        println "Preparing task for " + agentName + " on " + boards + " boards"
+        println "Preparing task for " + agentName
         collectBuilders["Build on " + agentName] = {
-            buildOnBuilder(agentName, boards)
+            buildOnBuilder(agentName)
         }
     }
 }
@@ -173,7 +171,7 @@ def stepGetBoards() {
         nodeBoards = getBoardsFromNodesEnv()
     }
     else {
-        nodeBoards = params.HIL_BOARDS.replaceAll("\\s", "").tokenize(',')
+        nodeBoards = params.HIL_BOARDS.tokenize(', ')
         /* TODO: Validate if the boards are connected */
     }
     nodeBoardQueue = nodeBoards.clone()
@@ -201,7 +199,7 @@ def getBoardsFromNodesEnv() {
  * Sets nodeTests
  */
 def stepGetTests() {
-    nodeTests = params.HIL_TESTS.replaceAll("\\s", "").tokenize(',')
+    nodeTests = params.HIL_TESTS.tokenize(', ')
     sh script: "echo collected tests: ${nodeTests.join(",")}",
             label: "print tests"
 }

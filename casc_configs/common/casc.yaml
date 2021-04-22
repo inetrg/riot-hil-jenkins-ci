@@ -45,11 +45,6 @@ credentials:
               username: "${GITHUB_CI_USERNAME}"
               description: "Secret token for github account access"
               password: "${readFile:${SECRETS}/github_tokens/repo_token}"
-          - string:
-              scope: GLOBAL
-              id: github
-              description: "Deprecated credential"
-              secret: "${readFile:${SECRETS}/github_tokens/repo_token}"
 
 unclassified:
   location:
