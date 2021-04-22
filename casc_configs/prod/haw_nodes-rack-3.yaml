@@ -22,12 +22,8 @@ jenkins:
             value: "r"
           - key: "HIL_RESET_WAIT"
             value: 0
-          - key: "MAKE"
-            value: "make"
           - key: "PERIPH_TIMER_HZ"
             value: 250000
-          - key: "PATH"
-            value: "${PATH}:/opt/JLink"
           - key: "PHILIP_PORT"
             value: "/dev/hil/philip"
           - key: "PORT"
@@ -60,12 +56,8 @@ jenkins:
             value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
-          - key: "MAKE"
-            value: "make"
           - key: "PHILIP_PORT"
             value: "/dev/hil/philip"
-          - key: "PATH"
-            value: "${PATH}:/opt/JLink"
           - key: "PORT"
             value: "/dev/hil/dut"
           - key: "RESET"
@@ -98,8 +90,6 @@ jenkins:
             value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
-          - key: "MAKE"
-            value: "make"
           - key: "PHILIP_PORT"
             value: "/dev/hil/philip"
           - key: "PORT"
@@ -134,8 +124,6 @@ jenkins:
             value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
-          - key: "MAKE"
-            value: "make"
           - key: "PHILIP_PORT"
             value: "/dev/hil/philip"
           - key: "PORT"
@@ -172,8 +160,6 @@ jenkins:
             value: 3
           - key: "HIL_RESET_WAIT"
             value: 3
-          - key: "MAKE"
-            value: "make"
           - key: "PERIPH_TIMER_HZ"
             value: 250000
           - key: "PHILIP_PORT"
@@ -208,8 +194,6 @@ jenkins:
             value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
-          - key: "MAKE"
-            value: "make"
           - key: "PHILIP_PORT"
             value: "/dev/hil/philip"
           - key: "PORT"
@@ -238,16 +222,10 @@ jenkins:
           env:
           - key: "BOARD"
             value: "esp32-wroom-32"
-          - key: "ESP32_SDK_DIR"
-            value: "/opt/esp/esp-idf"
-          - key: "PATH"
-            value: "$PATH:/opt/esp/xtensa-esp32-elf/bin"
           - key: "GIT_CACHE_PATH"
             value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
-          - key: "MAKE"
-            value: "make"
           - key: "PHILIP_PORT"
             value: "/dev/hil/philip"
           - key: "PORT"
@@ -282,8 +260,6 @@ jenkins:
             value: 3
           - key: "RESET_WAIT"
             value: 3
-          - key: "MAKE"
-            value: "make"
           - key: "PHILIP_PORT"
             value: "/dev/hil/philip"
           - key: "PORT"
