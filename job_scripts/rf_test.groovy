@@ -19,14 +19,24 @@ def getNodes(String label) {
 }
 
 
+@NonCPS
+def mapToList(depmap) {
+    def dlist = []
+    for (def entry2 in depmap) {
+        dlist.add(new java.util.AbstractMap.SimpleImmutableEntry(entry2.key, entry2.value))
+    }
+    dlist
+}
+
 /* globals ================================================================== */
 /* Global variables are decalred without `def` as they must be used in both
  * declaritive and scripted mode */
 nodes = nodesByLabel('HIL')
 collectBuilders = [:]
-nodeBoardQueue = []
+boardTestQueue = []
 nodeBoards = []
 nodeTests = []
+totalResults = [:]
 rfCommitId = ""
 rfUrl = ""
 riotCommitId = ""
@@ -44,6 +54,7 @@ pipeline {
 
                 stepGetBoards()
                 stepGetTests()
+                stepGetSupportedBoardTests()
                 stepArchiveMetadata()
 
                 stepStashRobotFWTests()
@@ -228,7 +239,9 @@ def stepGetBoards() {
         nodeBoards = params.HIL_BOARDS.tokenize(', ')
         /* TODO: Validate if the boards are connected */
     }
-    nodeBoardQueue = nodeBoards.clone()
+    for (board in nodeBoards) {
+        totalResults[board] = [:]
+    }
     sh script: "echo collected boards: ${nodeBoards.join(",")}",
             label: "print boards"
 }
@@ -278,14 +291,32 @@ def getTestsFromDir() {
     }
 }
 
+def stepGetSupportedBoardTests() {
+    script {
+        for (test in nodeTests) {
+            catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                supported_boards = sh returnStdout: true, script: "make --no-print-directory info-boards-supported -C ${test}", label: "Collecting boards supported for ${test}"
+                supported_boards = supported_boards.tokenize()
+                for (board in nodeBoards) {
+                    if (supported_boards.contains(board)) {
+                        totalResults[board][test] = ["support": true]
+                        boardTestQueue << ["board": (board), "test": (test)]
+                    }
+                    else {
+                        totalResults[board][test] = ["support": false]
+                    }
+                }
+            }
+        }
+    }
+}
+
 /* Iterates through each board in nodeBoards and test in nodeTests and builds. */
 def stepBuildJobs() {
     script {
-        while (nodeBoardQueue.size() > 0) {
-            def board = nodeBoardQueue.pop()
-            for (int t_idx=0; t_idx < nodeTests.size(); t_idx++) {
-                buildJob(board, nodeTests[t_idx])
-            }
+        while (boardTestQueue.size() > 0) {
+            boardtest = boardTestQueue.pop()
+            buildJob(boardtest["board"], boardtest["test"])
         }
     }
 }
@@ -301,16 +332,16 @@ def stepBuildJobs() {
  * @param test  The test to build
  */
 def buildJob(board, test) {
+    totalResults[board][test]['build'] = false
     exit_code = sh script: "RIOT_CI_BUILD=1 DOCKER_MAKE_ARGS=-j BUILD_IN_DOCKER=1 BOARD=${board} make -C ${test} clean all ${params.EXTRA_MAKE_COMMANDS}",
         returnStatus: true,
         label: "Build BOARD=${board} TEST=${test}"
-
     if (exit_code == 0) {
         /* Must remove all / to get stash to work */
+        totalResults[board][test]['build'] = true
         s_name = (board + "_" + test).replace("/", "_")
         stash name: s_name,
                 includes: "${test}/bin/${board}/*.elf,${test}/bin/${board}/*.hex,${test}/bin/${board}/*.bin"
-        sh script: "echo stashed ${s_name}", label: "Stashed ${s_name}"
     }
 }
 
@@ -352,21 +383,35 @@ def runParallel(args) {
  */
 def stepRunNodeTests()
 {
-    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+    catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE', catchInterruptions: false) {
         stage( "${env.BOARD} setup on  ${env.NODE_NAME}"){
             stepUnstashRobotFWTests()
         }
-        for (int i=0; i < nodeTests.size(); i++) {
-            stage("${nodeTests[i]}") {
-                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE',
+        for (def test in mapToList(totalResults[env.BOARD])) {
+            catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE',
                         catchInterruptions: false) {
-                    /* TODO: Test to see if the test compiled */
-                    stepUnstashBinaries(nodeTests[i])
-                    /* No need to reset as flashing and the test should manage
-                     * this */
-                    stepFlash(nodeTests[i])
-                    stepTest(nodeTests[i])
-                    stepArchiveTestResults(nodeTests[i])
+                if (test.value["support"]) {
+                    if (test.value['build']) {
+                        stage("${test.key}") {
+                            stepUnstashBinaries(test.key)
+                            /* No need to reset as flashing and the test should manage
+                            * this */
+                            stepFlash(test.key)
+                            stepTest(test.key)
+                            stepArchiveTestResults(test.key)
+                        }
+                    }
+                    else {
+                        stage("Build failing ${test.key}") {
+                            stepArchiveFailedTestResults(test.key)
+                            error("Build failure")
+                        }
+                    }
+                }
+                else {
+                    stage("Skipping ${test.key}") {
+                        stepArchiveSkippedTestResults(test.key)
+                    }
                 }
             }
         }
@@ -411,4 +456,29 @@ def stepArchiveTestResults(test)
     archiveArtifacts artifacts: "${base_dir}*.xml,${base_dir}*.html,${base_dir}*.html,${base_dir}includes/*.html",
             allowEmptyArchive: true
     junit testResults: "${base_dir}xunit.xml", allowEmptyResults: true
+}
+
+def stepArchiveFailedTestResults(test)
+{
+    def test_name = test.replaceAll('/', '_')
+    def dir = "build/robot/${env.BOARD}/${test_name}/xunit.xml"
+    writeFile file: dir, text: """<?xml version='1.0' encoding='UTF-8'?>
+<testsuite errors="0" failures="1" name="${test_name}" skipped="0" tests="1" time="0.000"><testcase classname="${test_name}.build" name="Build" time="0.000"><failure>Build failed</failure></testcase></testsuite>
+"""
+
+    archiveArtifacts artifacts: dir
+    junit testResults: dir, allowEmptyResults: true
+}
+
+
+def stepArchiveSkippedTestResults(test)
+{
+    def test_name = test.replaceAll('/', '_')
+    def dir = "build/robot/${env.BOARD}/${test_name}/xunit.xml"
+    writeFile file: dir, text: """<?xml version='1.0' encoding='UTF-8'?>
+<testsuite errors="0" failures="0" name="${test_name}" skipped="1" tests="1" time="0.000"><testcase classname="${test_name}.build" name="Build" time="0.000"><skipped>Test not supported</skipped></testcase></testsuite>
+"""
+
+    archiveArtifacts artifacts: dir
+    junit testResults: dir, allowEmptyResults: true
 }
