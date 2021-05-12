@@ -54,7 +54,7 @@ pipeline {
 
                 stepGetBoards()
                 stepGetTests()
-                stepGetSupportedBoardTests()
+                stepFillBoardTestQueue()
                 stepArchiveMetadata()
 
                 stepStashRobotFWTests()
@@ -135,9 +135,9 @@ def stepCheckoutRobotFWTests() {
 
 def stepCheckoutRobotFWFrontend() {
     if (params.GENERATE_HTML) {
-        rfCommitId = _checkout_repo("https://github.com/RIOT-OS/RobotFW-frontend.git",
+        _checkout_repo("https://github.com/RIOT-OS/RobotFW-frontend.git",
                                     "",
-                                    "main",
+                                    "fb-handle-build-problems",
                                     "RobotFW-frontend")
     }
     else {
@@ -291,21 +291,11 @@ def getTestsFromDir() {
     }
 }
 
-def stepGetSupportedBoardTests() {
+def stepFillBoardTestQueue() {
     script {
         for (test in nodeTests) {
-            catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
-                supported_boards = sh returnStdout: true, script: "make --no-print-directory info-boards-supported -C ${test}", label: "Collecting boards supported for ${test}"
-                supported_boards = supported_boards.tokenize()
-                for (board in nodeBoards) {
-                    if (supported_boards.contains(board)) {
-                        totalResults[board][test] = ["support": true]
-                        boardTestQueue << ["board": (board), "test": (test)]
-                    }
-                    else {
-                        totalResults[board][test] = ["support": false]
-                    }
-                }
+            for (board in nodeBoards) {
+                boardTestQueue << ["board": (board), "test": (test)]
             }
         }
     }
@@ -332,10 +322,11 @@ def stepBuildJobs() {
  * @param test  The test to build
  */
 def buildJob(board, test) {
-    totalResults[board][test]['build'] = false
-    exit_code = sh script: "RIOT_CI_BUILD=1 DOCKER_MAKE_ARGS=-j BUILD_IN_DOCKER=1 BOARD=${board} make -C ${test} clean all ${params.EXTRA_MAKE_COMMANDS}",
+    totalResults[board][test] = ['build': false, 'support': true]
+    exit_code = sh script: "RIOT_CI_BUILD=1 DOCKER_MAKE_ARGS=-j BUILD_IN_DOCKER=1 BOARD=${board} make -C ${test} clean all ${params.EXTRA_MAKE_COMMANDS} 2>build_output.log",
         returnStatus: true,
         label: "Build BOARD=${board} TEST=${test}"
+
     if (exit_code == 0) {
         /* Must remove all / to get stash to work */
         totalResults[board][test]['build'] = true
@@ -343,7 +334,15 @@ def buildJob(board, test) {
         stash name: s_name,
                 includes: "${test}/bin/${board}/*.elf,${test}/bin/${board}/*.hex,${test}/bin/${board}/*.bin"
     }
+    else {
+        def output = readFile('build_output.log').trim()
+        if (output.contains("There are unsatisfied feature requirements")) {
+            totalResults[board][test]['support'] = false
+        }
+        echo output
+    }
 }
+
 
 /* Add metadata file to archive */
 def stepArchiveMetadata() {
