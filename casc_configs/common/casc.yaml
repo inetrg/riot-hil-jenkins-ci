@@ -24,6 +24,7 @@ security:
     - method hudson.model.Node getLabelString
     - method hudson.model.Node toComputer
     - method jenkins.model.Jenkins getNode java.lang.String
+    - new java.util.AbstractMap$SimpleImmutableEntry java.lang.Object java.lang.Object
     - staticMethod jenkins.model.Jenkins getInstance
 
 credentials:
@@ -45,11 +46,6 @@ credentials:
               username: "${GITHUB_CI_USERNAME}"
               description: "Secret token for github account access"
               password: "${readFile:${SECRETS}/github_tokens/repo_token}"
-          - string:
-              scope: GLOBAL
-              id: github
-              description: "Deprecated credential"
-              secret: "${readFile:${SECRETS}/github_tokens/repo_token}"
 
 unclassified:
   location:
