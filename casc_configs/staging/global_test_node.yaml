@@ -18,8 +18,6 @@ jenkins:
             value: "nrf52840dk"
           - key: "GIT_CACHE_PATH"
             value: "/opt/riot-scripts/"
-          - key: "MAKE"
-            value: "make"
           - key: "PHILIP_PORT"
             value: "/dev/hil/philip"
           - key: "PORT"

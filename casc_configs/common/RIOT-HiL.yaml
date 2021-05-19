@@ -32,12 +32,6 @@ jobs:
                       suppressAutomaticTriggering()
                     }
                   }
-                  named {
-                    name('nightly')
-                    props {
-                      suppressAutomaticTriggering()
-                    }
-                  }
                 }
               }
             }

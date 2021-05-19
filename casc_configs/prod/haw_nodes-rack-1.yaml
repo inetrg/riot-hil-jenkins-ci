@@ -20,8 +20,6 @@ jenkins:
             value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
-          - key: "MAKE"
-            value: "make"
           - key: "PHILIP_PORT"
             value: "/dev/hil/philip"
           - key: "PORT"
@@ -54,10 +52,6 @@ jenkins:
             value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
-          - key: "MAKE"
-            value: "make"
-          - key: "PATH"
-            value: "${PATH}:/opt/JLink"
           - key: "PHILIP_PORT"
             value: "/dev/hil/philip"
           - key: "PORT"
@@ -86,8 +80,6 @@ jenkins:
             value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
-          - key: "MAKE"
-            value: "make"
           - key: "PHILIP_PORT"
             value: "/dev/hil/philip"
           - key: "PORT"
@@ -122,8 +114,6 @@ jenkins:
             value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
-          - key: "MAKE"
-            value: "make"
           - key: "PHILIP_PORT"
             value: "/dev/hil/philip"
           - key: "PORT"

@@ -6,7 +6,8 @@ RUN apt-get update && apt-get install -y \
     xsltproc \
     python3 \
     python3-pip \
-    python3-setuptools
+    python3-setuptools \
+    vim
 
 RUN pip3 install --no-cache-dir gitpython
 
