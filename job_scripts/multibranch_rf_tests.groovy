@@ -368,36 +368,55 @@ def generateNotifyMsgMD(results)
 
     for (board in mapToList(results)) {
         boards++
-        detail_msg += "<details><summary>&nbsp;&nbsp;${board.key}</summary>\n\n```"
+
+        tests_failed = 0
+        build_failed = 0
+        flash_failed = 0
+        test_details = ""
         for (test in mapToList(board.value)) {
             /*  test.value = [build: true, support: true, flash: true, test: false] */
-            detail_msg += "\n  ${test.key}: "
+            test_details += "\n  ${test.key}: "
             if (test.value['test']) {
                 passed++
-                detail_msg += "pass"
+                test_details += "pass"
             }
             else if (!test.value['build']) {
                 failed++
-                detail_msg += "build fail"
+                build_failed++
+                test_details += "build fail"
 
             }
             else if (!test.value['support']) {
                 skipped++
-                detail_msg += "skip"
+                test_details += "skip"
             }
             else if (!test.value['flash']){
                 failed++
-                detail_msg += "flash fail"
+                flash_failed++
+                test_details += "flash fail"
             }
             else if (!test.value['test']){
                 failed++
-                detail_msg += "fail"
+                tests_failed++
+                test_details += "fail"
             }
             else {
                 failed++
-                detail_msg += "unknown fail"
+                test_details += "unknown fail"
             }
         }
+        detail_msg += "<details><summary>&nbsp;&nbsp;${board.key} "
+        if (tests_failed) {
+            detail_msg += "(${tests_failed} fail test) "
+        }
+        if (build_failed) {
+            detail_msg += "(${build_failed} fail build) "
+        }
+        if (flash_failed) {
+            detail_msg += "(${flash_failed} fail flash) "
+        }
+        detail_msg += "</summary>\n\n```"
+        detail_msg += test_details
         detail_msg += "\n```\n</details>\n"
     }
 
