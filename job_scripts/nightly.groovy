@@ -51,6 +51,7 @@ pipeline {
         }
         stage('compile results') {
             steps {
+                stepGenerateBadge()
                 stepCompileResults()
             }
         }
@@ -98,6 +99,12 @@ def stepStashRobotFWTests() {
 def stepCompileResults()
 {
     compileResults(true)
+}
+
+def stepGenerateBadge()
+{
+    def resCount =  countResults(totalResults)
+    setBadge(resCount['pass'], resCount['fail'], resCount['boards'])
 }
 
 /* riot_build steps =============================================================== */
@@ -307,6 +314,139 @@ def archiveMetadata() {
     archiveArtifacts artifacts: "build/robot/metadata.xml"
 }
 
+/* Returns dict containing results numbers
+ * results ->
+ * [my_board_1: [my_test_1: [build: true, support: true, flash: true, test: false],
+ *               my_test_2: [build: false, support: false, flash: true, test: true]],
+ *  my_board_2: [my_test_1: [build: false, support: true, flash: false, test: false],
+ *               my_test_2: [build: true, support: true, flash: true, test: true]]
+ * ]
+ *
+ * return -> [boards: 2, pass: 1, fail: 2]
+ */
+def countResults(results)
+{
+    boards = 0
+    passed = 0
+    failed = 0
+
+    for (board in mapToList(results)) {
+        boards++
+
+        for (test in mapToList(board.value)) {
+            if (test.value['test']) {
+                passed++
+            }
+            else if (test.value['support']) {
+                failed++
+            }
+        }
+    }
+    return ["boards": boards, "pass": passed, "fail": failed]
+}
+
+/* This archives a json badge result for https://shields.io/endpoint */
+def setBadge(passed, failed, boards) {
+    String color = "orange"
+    if (passed > 0 && failed == 0) {
+        color = "green"
+    }
+    String filename = 'build/robot/badge.json'
+    writeFile file: filename, text: "{\"schemaVersion\":1,\"label\":\"HiL\",\"message\":\"${passed} pass / ${failed} fail / ${boards} boards\",\"color\":\"${color}\"}"
+    archiveArtifacts artifacts: filename
+}
+
+/* Generates a nice markdown based summary of the test */
+def generateNotifyMsgMD(results)
+{
+    results = totalResults
+
+    boards = 0
+    passed = 0
+    failed = 0
+    skipped = 0
+
+    detail_msg = ""
+
+    for (board in mapToList(results)) {
+        boards++
+
+        tests_failed = 0
+        build_failed = 0
+        flash_failed = 0
+        test_details = ""
+        for (test in mapToList(board.value)) {
+            /*  test.value = [build: true, support: true, flash: true, test: false] */
+            test_details += "\n  ${test.key}: "
+            if (test.value['test']) {
+                passed++
+                test_details += "pass"
+            }
+            else if (!test.value['build']) {
+                failed++
+                build_failed++
+                test_details += "build fail"
+
+            }
+            else if (!test.value['support']) {
+                skipped++
+                test_details += "skip"
+            }
+            else if (!test.value['flash']){
+                failed++
+                flash_failed++
+                test_details += "flash fail"
+            }
+            else if (!test.value['test']){
+                failed++
+                tests_failed++
+                test_details += "fail"
+            }
+            else {
+                failed++
+                test_details += "unknown fail"
+            }
+        }
+        detail_msg += "<details><summary>&nbsp;&nbsp;${board.key} "
+        if (tests_failed) {
+            detail_msg += "(${tests_failed} fail test) "
+        }
+        if (build_failed) {
+            detail_msg += "(${build_failed} fail build) "
+        }
+        if (flash_failed) {
+            detail_msg += "(${flash_failed} fail flash) "
+        }
+        detail_msg += "</summary>\n\n```"
+        detail_msg += test_details
+        detail_msg += "\n```\n</details>\n"
+    }
+
+    full_msg = "[HiL Test Results](${env.RUN_DISPLAY_URL})\n\n"
+    full_msg += "${passed} tests passed\n"
+    full_msg += "${failed} tests failed\n"
+    full_msg += "${skipped} tests skipped\n\n"
+    full_msg += "<details>\n${detail_msg}</details>\n"
+
+    return full_msg
+}
+
+/* Writes a comment on a github PR */
+def notifyOnPR(owner, repo, pr, msg='default comment') {
+
+    msg = msg.replaceAll("[\\n]", "\\\\n")
+    def query = "-X POST -d '{\"body\": \"${msg}\"}' "
+    query = "${query}\"https://api.github.com/repos/${owner}/${repo}/issues/"
+    query = "${query}${pr}/comments\""
+    withCredentials([usernamePassword(credentialsId: 'github_token',
+                                      passwordVariable: 'TOKEN',
+                                      usernameVariable: 'DUMMY')]) {
+        sh script: '''
+            curl -H "Authorization: token $TOKEN" ''' + query,
+        label: "Query github api"
+    }
+}
+
 /* common riot_build ======================================================== */
 /* Returns a list of online builder nodes. It seems each node should be
  * cloned or copied before being used.
@@ -314,7 +454,6 @@ def archiveMetadata() {
 def getActiveBuildNodes() {
     return nodesByLabel('riot_build')
 }
-
 
 /* Empties a queue of
  * [[board: "my_board_1", test: "my_test_1"],
@@ -331,10 +470,10 @@ def getActiveBuildNodes() {
  * It is also assumed to be initialied with all keys corresponding to boards
  * and having an empty Map that will be populated with a test key and
  * build and supported results.  Maybe it is better to look at an example:
- * [my_board_1: [my_test_1: [build: true, support: true],
- *               my_test_2: [build: false, support: false]],
- *  my_board_2: [my_test_1: [build: false, support: true],
- *               my_test_2: [build: true, support: true]]
+ * [my_board_1: [my_test_1: [build: true, support: true, flash: true, test: false],
+ *               my_test_2: [build: false, support: false, flash: true, test: true]],
+ *  my_board_2: [my_test_1: [build: false, support: true, flash: false, test: false],
+ *               my_test_2: [build: true, support: true, flash: true, test: false]]
  * ]
  * Clear as mud?
  */
@@ -352,7 +491,7 @@ def buildJobs(board_test_queue, results, extra_make_cmd = "") {
 def buildJob(board, test, results, extra_make_cmd = "") {
     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE',
             catchInterruptions: false) {
-        results[board][test] = ['build': false, 'support': false]
+        results[board][test] = ['build': false, 'support': false, 'flash': false, 'test': false]
         exit_code = sh script: "RIOT_CI_BUILD=1 DOCKER_MAKE_ARGS=-j BUILD_IN_DOCKER=1 BOARD=${board} make -C ${test} clean all ${extra_make_cmd} 2>build_output.log",
             returnStatus: true,
             label: "Build BOARD=${board} TEST=${test}"
@@ -409,6 +548,7 @@ def flashTest(test)
 /* Does all the things needed for robot tests. */
 def rFTest(test)
 {
+    def test_result = false
     def test_name = test.replaceAll('/', '_')
     sh script: "make -C ${test} robot-clean || true",
             label: "Cleaning before ${test} test"
@@ -416,9 +556,10 @@ def rFTest(test)
      * allowed to fail */
     catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE',
             catchInterruptions: false) {
-        sh script: "make -C ${test} robot-test",
-                label: "Run ${test} test"
+        sh script: "make -C ${test} robot-test", label: "Run ${test} test"
+        test_result = true
     }
+    return test_result
 }
 
 def archiveTestResults(test)
@@ -479,8 +620,12 @@ def flashAndRFTestNodes(results)
                             /* No need to reset as flashing and the test should manage
                             * this */
                             flashTest(test.key)
-                            rFTest(test.key)
+                            test.value['flash']  = true
+                            test.value['test'] = rFTest(test.key)
+                            sh script: "make -C ${test.key} robot-plot",
+                                label: "Generate plot for ${test} test if possible"
                             archiveTestResults(test.key)
+
                         }
                     }
                     else {
@@ -503,12 +648,15 @@ def flashAndRFTestNodes(results)
 
 def riotTest(test)
 {
+    def test_result = false
     def test_name = test.replaceAll('/', '_')
     catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE',
             catchInterruptions: false) {
         sh script: "make -C ${test} test",
                 label: "Run ${test} test"
+        test_result = true
     }
+    return test_result
 }
 
 /* Tries to flash and test each test.
@@ -530,7 +678,8 @@ def flashAndRiotTestNodes(results)
                             /* No need to reset as flashing and the test should manage
                             * this */
                             flashTest(test.key)
-                            riotTest(test.key)
+                            test.value['flash'] = true
+                            test.value['test'] = riotTest(test.key)
                         }
                     }
                     else {
