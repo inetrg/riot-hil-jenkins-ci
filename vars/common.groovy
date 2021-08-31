@@ -1,163 +1,3 @@
-/* This file uses both decalritive syntax and scripted.
- * This is because delaritive is simpler and generally preferred but suffer
- * from limited dynamic discovery and implementations.
- *
- * @Note If this Jenkinsfile is touched and merged into master it should also
- * manually be merged into nightly to be executed that night, otherwise it is
- * one night behind.
- */
-
-
-import jenkins.model.*
-
-/* globals ================================================================== */
-/* Global variables are decalred without `def` as they must be used in both
- * declaritive and scripted mode */
-collectBuilders = [:]
-boardTestQueue = []
-totalResults = [:]
-nodeBoards = []
-
-/* pipeline ================================================================= */
-pipeline {
-    agent { label 'master' }
-    options {
-        // If the whole process takes more than x hours then exit
-        // This must be longer since multiple jobs can be started but waiting on nodes to complete
-        timeout(time: 3, unit: 'HOURS')
-        // Failing fast allows the nodes to be interrupted as some steps can take a while
-        parallelsAlwaysFailFast()
-    }
-    stages {
-        stage('setup master') {
-            steps {
-                stepCheckoutRobotFWTests()
-                stepCheckoutRIOT()
-
-                stepFillBoardTestQueue()
-                stepArchiveMetadata()
-
-                stepStashRobotFWTests()
-            }
-        }
-        stage('setup build server and build') {
-            steps {
-                script {
-                    processBuilderTask()
-                    parallel collectBuilders
-                }
-            }
-        }
-        stage('node test') {
-            steps {
-                runParallel items: nodeBoards.collect { "${it}" }
-            }
-        }
-        stage('compile results') {
-            steps {
-                stepMultiBranchCompileResults()
-            }
-        }
-    }
-}
-
-/* master steps ============================================================= */
-def stepCheckoutRobotFWTests() {
-    helperCheckoutRepo("https://github.com/RIOT-OS/RobotFW-tests.git",
-                       env.CHANGE_ID,
-                       env.BRANCH_NAME)
-}
-
-def stepCheckoutRIOT() {
-    helperCheckoutRepo("https://github.com/RIOT-OS/RIOT.git",
-                       "",
-                       "refs/heads/master",
-                       "RIOT")
-}
-
-def stepFillBoardTestQueue() {
-    nodeBoards = getBoardsFromNodes()
-    tests = getTests()
-    totalResults = getEmptyResultsFromBoards(nodeBoards)
-    boardTestQueue = getBoardTestQueue(nodeBoards, tests)
-}
-
-def stepArchiveMetadata() {
-    archiveMetadata()
-}
-def stepStashRobotFWTests() {
-    stashRobotFWTests()
-}
-
-/* Runs a script to compile all tests results in the archive. */
-def stepMultiBranchCompileResults()
-{
-    ret = sh script: '''
-        HIL_JOB_NAME=$(echo ${JOB_NAME}| cut -d'/' -f 1)
-        HIL_BRANCH_NAME=$(echo $JOB_NAME| cut -d'/' -f 2)
-        HIL_BRANCH_NAME=$(echo $HIL_BRANCH_NAME | sed 's/%2F/-/g')
-        HIL_BRANCH_NAME=$(echo $HIL_BRANCH_NAME | sed 's/_/-/g')
-        HIL_BRANCH_NAME=$(ls ${JENKINS_HOME}/jobs/${HIL_JOB_NAME}/branches/ | grep "^$HIL_BRANCH_NAME")
-        ARCHIVE_DIR=${JENKINS_HOME}/jobs/${HIL_JOB_NAME}/branches/${HIL_BRANCH_NAME}/builds/${BUILD_NUMBER}/archive/build/robot/
-        if [ -d $ARCHIVE_DIR ]; then
-            ./dist/tools/ci/results_to_xml.sh $ARCHIVE_DIR
-        fi
-    ''', label: "Compile archived results"
-}
-
-/* node steps =============================================================== */
-def buildOnBuilder(String agentName) {
-    node("${agentName}") {
-        stage("Building on ${agentName}") {
-            stepCheckoutRobotFWTests()
-            stepCheckoutRIOT()
-            stepBuildJobs()
-        }
-    }
-}
-
-def processBuilderTask() {
-   for(builder in getActiveBuildNodes()) {
-       def agentName = builder
-        println "Preparing task for " + agentName
-        collectBuilders["Build on " + agentName] = {
-            buildOnBuilder(agentName)
-        }
-    }
-}
-
-def stepBuildJobs() {
-    buildJobs(boardTestQueue, totalResults)
-}
-
-/* test node steps ========================================================== */
-/* Runs all tests on each board in parallel. */
-def runParallel(args) {
-    parallel args.items.collectEntries { name -> [ "${name}": {
-
-        node (name) {
-            stage("${name}") {
-                /* We want to timeout a node if it doesn't respond
-                 * The timeout should only start once it is acquired
-                 */
-                timeout(time: 60, unit: 'MINUTES') {
-                    script {
-                        flashAndRFTestNodes(totalResults)
-                    }
-                }
-            }
-        }
-    }]}
-}
-
-/*
-Since it seems having a dynamic declaritive pipeline that runs parallel on
-many different nodes without saving the job scripts in an scm therefore not
-existing in the workspace makes the idea of common code hard. This should be
-copied and pasted at the bottom of each job and updated as needed until a
-more clever person comes along... Which should not be that hard...
-*/
-
 /* common =================================================================== */
 
 /* common master ============================================================ */
@@ -357,14 +197,15 @@ def setBadge(passed, failed, boards) {
 /* Generates a nice markdown based summary of the test */
 def generateNotifyMsgMD(results)
 {
-    results = totalResults
-
     boards = 0
     passed = 0
     failed = 0
     skipped = 0
 
-    detail_msg = ""
+    //detail_msg = ""
+    pass_msg = []
+    flash_fail_msg = []
+    fail_msg = []
 
     for (board in mapToList(results)) {
         boards++
@@ -373,6 +214,7 @@ def generateNotifyMsgMD(results)
         build_failed = 0
         flash_failed = 0
         test_details = ""
+        emoji = "&#9989;"
         for (test in mapToList(board.value)) {
             /*  test.value = [build: true, support: true, flash: true, test: false] */
             test_details += "\n  ${test.key}: "
@@ -384,6 +226,7 @@ def generateNotifyMsgMD(results)
                 failed++
                 build_failed++
                 test_details += "build fail"
+                emoji = "&#10060;"
 
             }
             else if (!test.value['support']) {
@@ -394,23 +237,29 @@ def generateNotifyMsgMD(results)
                 failed++
                 flash_failed++
                 test_details += "flash fail"
+                if (emoji != "&#10060;") {
+                    emoji = "&#128556;"
+                }
             }
             else if (!test.value['test']){
                 failed++
                 tests_failed++
                 test_details += "fail"
+                emoji = "&#10060;"
             }
             else {
                 failed++
                 test_details += "unknown fail"
+                emoji = "&#10060;"
             }
         }
-        detail_msg += "<details><summary>&nbsp;&nbsp;${board.key} "
+
+        detail_msg = "<details><summary>&nbsp;&nbsp;${emoji}&nbsp;${board.key} "
         if (tests_failed) {
-            detail_msg += "(${tests_failed} fail test) "
+            detail_msg += "<strong>(${tests_failed} fail test)</strong> "
         }
         if (build_failed) {
-            detail_msg += "(${build_failed} fail build) "
+            detail_msg += "<<strong>(${build_failed} fail build)</strong> "
         }
         if (flash_failed) {
             detail_msg += "(${flash_failed} fail flash) "
@@ -418,13 +267,26 @@ def generateNotifyMsgMD(results)
         detail_msg += "</summary>\n\n```"
         detail_msg += test_details
         detail_msg += "\n```\n</details>\n"
+        if (tests_failed || build_failed) {
+            fail_msg += detail_msg
+        }
+        else if (flash_failed) {
+            flash_fail_msg += detail_msg
+        }
+        else {
+            pass_msg += detail_msg
+        }
     }
 
-    full_msg = "[HiL Test Results](${env.RUN_DISPLAY_URL})\n\n"
-    full_msg += "${passed} tests passed\n"
-    full_msg += "${failed} tests failed\n"
-    full_msg += "${skipped} tests skipped\n\n"
-    full_msg += "<details>\n${detail_msg}</details>\n"
+    full_msg = "[HiL Test Results](${env.RUN_DISPLAY_URL})\n"
+    full_msg += "|PASS|FAIL|SKIP\n"
+    full_msg += "|-|-|-\n"
+    full_msg += "|${passed}|${failed}|${skipped}\n\n"
+    full_msg += "<details>\n"
+    full_msg += fail_msg.join("\n")
+    full_msg += flash_fail_msg.join("\n")
+    full_msg += pass_msg.join("\n")
+    full_msg += "</details>\n"
 
     return full_msg
 }

@@ -30,12 +30,9 @@ pipeline {
         stage('setup master') {
             steps {
                 script{
-                    stepCheckoutRobotFWTests()
-                    stepCheckoutRobotFWFrontend()
                     stepCheckoutRIOT()
                     stepFillBoardTestQueue()
-                    stepArchiveMetadata()
-                    stepStashRobotFWTests()
+                    stepStashRIOT()
                 }
             }
         }
@@ -52,69 +49,46 @@ pipeline {
                 runParallel items: nodeBoards.collect { "${it}" }
             }
         }
-        stage('compile results') {
+        stage('notify if PR') {
             steps {
-                stepGenerateBadge()
-                stepCompileResults()
+                stepNotify()
             }
         }
     }
 }
 
 /* master steps ============================================================= */
-def stepCheckoutRobotFWTests() {
-    common.helperCheckoutRepo("https://github.com/RIOT-OS/RobotFW-tests.git",
-                       "",
-                       "refs/heads/master")
-}
-
-def stepCheckoutRobotFWFrontend() {
-    common.helperCheckoutRepo("https://github.com/RIOT-OS/RobotFW-frontend.git",
-                       "",
-                       "main",
-                       "RobotFW-frontend")
-}
-
-
 def stepCheckoutRIOT() {
-    common.helperCheckoutRepo("https://github.com/RIOT-OS/RIOT.git",
-                       "",
-                       "refs/heads/master",
-                       "RIOT")
+    common.helperCheckoutRepo(params.RIOT_URL,
+                              params.RIOT_PR,
+                              params.RIOT_BRANCH,
+                              ".",
+                              params.RIOT_OWNER,
+                              "RIOT")
 }
-
 
 def stepFillBoardTestQueue() {
-    nodeBoards = common.getBoardsFromNodes()
-    tests = common.getTests()
+    nodeBoards = common.getBoardsFromNodes(params.HIL_BOARDS)
+    tests = common.getTests(params.HIL_TESTS)
     totalResults = common.getEmptyResultsFromBoards(nodeBoards)
     boardTestQueue = common.getBoardTestQueue(nodeBoards, tests)
 }
 
-def stepArchiveMetadata() {
-    common.archiveMetadata()
+def stepStashRIOT() {
+    stash name: "RiotRepo"
 }
 
-def stepStashRobotFWTests() {
-    common.stashRobotFWTests()
-}
-
-def stepCompileResults()
-{
-    common.compileResults(true)
-}
-
-def stepGenerateBadge()
-{
-    def resCount =  common.countResults(totalResults)
-    common.setBadge(resCount['pass'], resCount['fail'], resCount['boards'])
+def stepNotify() {
+    if (params.RIOT_PR != "") {
+        msg = common.generateNotifyMsgMD(totalResults)
+        common.notifyOnPR(params.RIOT_OWNER, "RIOT", params.RIOT_PR, msg)
+    }
 }
 
 /* riot_build steps =============================================================== */
 def buildOnBuilder(String agentName) {
     node("${agentName}") {
         stage("Building on ${agentName}") {
-            stepCheckoutRobotFWTests()
             stepCheckoutRIOT()
             stepBuildJobs()
         }
@@ -132,10 +106,14 @@ def processBuilderTask() {
 }
 
 def stepBuildJobs() {
-    common.buildJobs(boardTestQueue, totalResults)
+    common.buildJobs(boardTestQueue, totalResults, params.EXTRA_MAKE_COMMANDS)
 }
 
 /* test node steps ========================================================== */
+def stepUnstashRIOT() {
+    unstash name: "RiotRepo"
+}
+
 /* Runs all tests on each board in parallel. */
 def runParallel(args) {
     parallel args.items.collectEntries { name -> [ "${name}": {
@@ -147,7 +125,8 @@ def runParallel(args) {
                  */
                 timeout(time: 60, unit: 'MINUTES') {
                     script {
-                        common.flashAndRFTestNodes(totalResults)
+                        stepUnstashRIOT()
+                        common.flashAndRiotTestNodes(totalResults)
                     }
                 }
             }
