@@ -11,11 +11,6 @@ jenkins:
           sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
       name: "mobi15"
       nodeDescription: "RIOT build server"
-      nodeProperties:
-      - envVars:
-          env:
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/git-cache/"
       remoteFS: "/srv/jenkins-slave/"
       retentionStrategy: "always"
   - permanent:
@@ -29,11 +24,6 @@ jenkins:
           sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
       name: "mobi36"
       nodeDescription: "RIOT build server"
-      nodeProperties:
-      - envVars:
-          env:
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/git-cache/"
       remoteFS: "/srv/jenkins-slave/"
       retentionStrategy: "always"
   - permanent:
@@ -48,9 +38,5 @@ jenkins:
       name: "mobi39"
       nodeDescription: "RIOT build server"
       nodeProperties:
-      - envVars:
-          env:
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/git-cache/"
       remoteFS: "/srv/jenkins-slave/"
       retentionStrategy: "always"

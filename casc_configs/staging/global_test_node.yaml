@@ -10,14 +10,12 @@ jenkins:
           port: 22
           sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
       name: "test_node"
-      nodeDescription: "The node in position 1 of rack 4 in the HiL Server Room"
+      nodeDescription: "Test node on the desk of KW"
       nodeProperties:
       - envVars:
           env:
           - key: "BOARD"
             value: "nrf52840dk"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "PHILIP_PORT"
             value: "/dev/hil/philip"
           - key: "PORT"

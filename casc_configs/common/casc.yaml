@@ -1,54 +1,24 @@
 jenkins:
   systemMessage: "Welcome to the RIOT HiL Jenkins instance.\n\n"
-  numExecutors: 3
-  securityRealm:
-    github:
-      githubWebUri: "https://github.com"
-      githubApiUri: "https://api.github.com"
-      clientID: "${GITHUB_OAUTH_CLIENT_ID}"
-      clientSecret: "${readFile:${SECRETS}/github_oauth/client_secrets}"
-      oauthScopes: "read:org,user:email"
+  numExecutors: 2
   remotingSecurity:
     enabled: true
-
-security:
-  queueItemAuthenticator:
-    authenticators:
-    - global:
-        strategy: triggeringUsersAuthorizationStrategy
-  scriptApproval:
-    approvedSignatures:
-    - field hudson.model.Slave name
-    - method hudson.model.AbstractCIBase getNodes
-    - method hudson.model.Computer isOnline
-    - method hudson.model.Node getLabelString
-    - method hudson.model.Node toComputer
-    - method jenkins.model.Jenkins getNode java.lang.String
-    - new java.util.AbstractMap$SimpleImmutableEntry java.lang.Object java.lang.Object
-    - staticMethod jenkins.model.Jenkins getInstance
-
-credentials:
-  system:
-    domainCredentials:
-      - credentials:
-          - basicSSHUserPrivateKey:
-              scope: GLOBAL
-              id: jenkins_master_ssh
-              username: jenkins
-              passphrase: ""
-              description: "A ssh key for jenkins to connect to slaves"
-              privateKeySource:
-                directEntry:
-                  privateKey: "${readFile:${SECRETS}/jenkins_ssh_keys/id_rsa_master}"
-          - usernamePassword:
-              scope: GLOBAL
-              id: github_token
-              username: "${GITHUB_CI_USERNAME}"
-              description: "Secret token for github account access"
-              password: "${readFile:${SECRETS}/github_tokens/repo_token}"
 
 unclassified:
   location:
     url: "${JENKINS_URL}"
   gitHubConfiguration:
     apiRateLimitChecker: ThrottleOnOver
+  globalLibraries:
+    libraries:
+    - defaultVersion: "${LIB_VERSION}"
+      name: "inet_hil_ci_utils"
+      retriever:
+        modernSCM:
+          scm:
+            github:
+              configuredByUrl: true
+              credentialsId: "github_token"
+              repoOwner: "inetrg"
+              repository: "riot-hil-jenkins-ci"
+              repositoryUrl: "https://github.com/inetrg/riot-hil-jenkins-ci.git"

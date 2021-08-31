@@ -1,0 +1,24 @@
+jobs:
+  - script: >
+      pipelineJob('seed_repo_jobs') {
+        description('Checks the jenkins repo and creates jobs')
+        triggers {
+          scm('H/5 * * * *')
+        }
+        definition {
+          cpsScm {
+            lightweight(true)
+            scm {
+              git {
+                remote {
+                  credentials('github_token')
+                  github('inetrg/riot-hil-jenkins-ci')
+                }
+                branch('${LIB_VERSION}')
+              }
+            }
+            scriptPath('job_scripts/seed_repo_jobs.groovy')
+          }
+        }
+      }
+
