@@ -1,0 +1,26 @@
+jenkins:
+  nodes:
+  - permanent:
+      numExecutors: 1
+      labelString: "HIL <MY_BOARD>"
+      launcher:
+        ssh:
+          credentialsId: "jenkins_master_ssh"
+          host: "localhost"
+          port: 22
+          sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+      name: "test_node_<AGENT_NUMBER>"
+      nodeDescription: "Local test node"
+      nodeProperties:
+      - envVars:
+          env:
+          - key: "BOARD"
+            value: "<MY_BOARD>"
+          - key: "PHILIP_PORT"
+            value: "<PHILIP_PORT>"
+          - key: "PORT"
+            value: "<BOARD_PORT>"
+          - key: "RIOTBASE"
+            value: "<JENKINS_AGENT_HOME_DIR>/RIOT"
+      remoteFS: "/srv/jenkins/slave_<AGENT_NUMBER>"
+      retentionStrategy: "always"
