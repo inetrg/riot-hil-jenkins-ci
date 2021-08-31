@@ -16,8 +16,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "slstk3401a"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "JLINK_PRE_FLASH"
             value: "r"
           - key: "HIL_RESET_WAIT"
@@ -52,8 +50,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "frdm-kw41z"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
           - key: "PHILIP_PORT"
@@ -86,8 +82,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "nucleo-f091rc"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
           - key: "PHILIP_PORT"
@@ -120,8 +114,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "nucleo-f767zi"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
           - key: "PHILIP_PORT"
@@ -154,8 +146,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "arduino-mega2560"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "HIL_CONNECT_WAIT"
             value: 3
           - key: "HIL_RESET_WAIT"
@@ -190,8 +180,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "saml10-xpro"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
           - key: "PHILIP_PORT"
@@ -222,8 +210,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "esp32-wroom-32"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
           - key: "PHILIP_PORT"
@@ -254,8 +240,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "arduino-due"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "HIL_CONNECT_WAIT"
             value: 3
           - key: "RESET_WAIT"

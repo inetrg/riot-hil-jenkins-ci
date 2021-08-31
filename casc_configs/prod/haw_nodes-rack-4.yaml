@@ -16,8 +16,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "esp8266-esp-12x"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "PHILIP_PORT"
             value: "/dev/hil/philip"
           - key: "PORT"
@@ -42,8 +40,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "nucleo-f303re"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
           - key: "PHILIP_PORT"
@@ -74,8 +70,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "nucleo-l152re"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
           - key: "PHILIP_PORT"
@@ -106,8 +100,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "nucleo-l432kc"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
           - key: "PHILIP_PORT"
@@ -138,8 +130,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "saml11-xpro"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
           - key: "PHILIP_PORT"
@@ -170,8 +160,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "z1"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
           - key: "PHILIP_PORT"
@@ -202,8 +190,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "slstk3400a"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
           - key: "PERIPH_TIMER_HZ"
@@ -236,8 +222,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "frdm-k64f"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
           - key: "PHILIP_PORT"
