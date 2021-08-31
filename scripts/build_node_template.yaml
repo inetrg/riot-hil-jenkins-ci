@@ -1,0 +1,15 @@
+jenkins:
+  nodes:
+  - permanent:
+      numExecutors: 1
+      labelString: "riot_build"
+      launcher:
+        ssh:
+          credentialsId: "jenkins_master_ssh"
+          host: "localhost"
+          port: 22
+          sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
+      name: "test_builder"
+      nodeDescription: "Local test build server"
+      remoteFS: "<JENKINS_AGENT_HOME_DIR>/builder"
+      retentionStrategy: "always"
