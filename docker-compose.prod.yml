@@ -17,4 +17,4 @@ services:
       - /opt/riot-hil-jenkins-ci-secrets/prod:/run/secrets
       - /opt/riot-hil-jenkins-home:/var/jenkins_home
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
