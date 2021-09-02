@@ -1,10 +1,17 @@
 jenkins:
+  securityRealm:
+    github:
+      githubWebUri: "https://github.com"
+      githubApiUri: "https://api.github.com"
+      clientID: "${readFile:${SECRETS}/oauth_client_id}"
+      clientSecret: "${readFile:${SECRETS}/oauth_secrets}"
+      oauthScopes: "read:org,user:email"
   authorizationStrategy:
     globalMatrix:
       permissions:
-        - "Overall/Administer:${ADMIN_0}"
-        - "Overall/Administer:${ADMIN_1}"
-        - "Overall/Administer:${ADMIN_2}"
+        - "Overall/Administer:MrKevinWeiss"
+        - "Overall/Administer:ozfox"
+        - "Overall/Administer:cgundogan"
         - "Overall/Read:authenticated"
         - "Overall/Read:anonymous"
         - "Job/Read:anonymous"

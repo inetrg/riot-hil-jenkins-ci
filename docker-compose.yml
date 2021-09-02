@@ -1,25 +1,21 @@
 version: "3.3"
 
-# For testing this should be run without persistent storage
-# Only uncomment if testing things that require this
-#volumes:
-#  local_jenkins_home:
+volumes:
+  jenkins_home:
 
 services:
   jenkins:
     build:
       context: .
       args:
-        GITHUB_OAUTH_CLIENT_ID: 83666a7803532cb37ecd
-        GITHUB_REPO_OWNER: riot-hil-bot
-        GITHUB_CI_USERNAME: riot-hil-bot
-        JENKINS_PREFIX:
-        CASC_ENV: staging
-        JENKINS_URL: https://localhost:8080
+        CASC_ENV: local
+    environment:
+      GITHUB_UID: 0605d80e1d5c45b7b71a2a82d09f3caa
+      JENKINS_OPTS: "--prefix="
+      JENKINS_URL: https://localhost:8080
+      LIB_VERSION: main
     image: riot-hil-jenkins-ci/local:latest
-
     volumes:
-      - /opt/riot-hil-jenkins-ci-secrets/local:/run/secrets
-      #- local_jenkins_home:/var/jenkins_home
-    ports:
-      - "8080:8080"
+      - ~/.ssh:/run/secrets
+      - jenkins_home:/var/jenkins_home
+    network_mode: "host"

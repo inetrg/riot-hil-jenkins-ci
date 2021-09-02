@@ -16,8 +16,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "samr21-xpro"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
           - key: "PHILIP_PORT"
@@ -48,8 +46,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "nrf52dk"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
           - key: "PHILIP_PORT"
@@ -76,8 +72,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "nucleo-l073rz"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
           - key: "PHILIP_PORT"
@@ -110,8 +104,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "nucleo-f411re"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
           - key: "PHILIP_PORT"

@@ -1,3 +1,4 @@
+
 /* This file uses both decalritive syntax and scripted.
  * This is because delaritive is simpler and generally preferred but suffer
  * from limited dynamic discovery and implementations.
@@ -54,8 +55,8 @@ pipeline {
         }
         stage('compile results') {
             steps {
-                stepGenerateBadge()
                 stepCompileResults()
+                stepNotify()
             }
         }
     }
@@ -63,30 +64,38 @@ pipeline {
 
 /* master steps ============================================================= */
 def stepCheckoutRobotFWTests() {
-    common.helperCheckoutRepo("https://github.com/RIOT-OS/RobotFW-tests.git",
-                       "",
-                       "refs/heads/master")
+    common.helperCheckoutRepo(params.ROBOTFW_URL,
+            params.ROBOTFW_PR,
+            params.ROBOTFW_BRANCH,
+            ".",
+            params.ROBOTFW_OWNER,
+            "RobotFW-tests")
 }
 
 def stepCheckoutRobotFWFrontend() {
-    common.helperCheckoutRepo("https://github.com/RIOT-OS/RobotFW-frontend.git",
-                       "",
-                       "main",
-                       "RobotFW-frontend")
+    if (params.GENERATE_HTML) {
+        common.helperCheckoutRepo("https://github.com/RIOT-OS/RobotFW-frontend.git",
+                "",
+                "main",
+                "RobotFW-frontend")
+    }
+    else {
+        echo "Skipped as html is not being generated"
+    }
 }
-
 
 def stepCheckoutRIOT() {
-    common.helperCheckoutRepo("https://github.com/RIOT-OS/RIOT.git",
-                       "",
-                       "refs/heads/master",
-                       "RIOT")
+    common.helperCheckoutRepo(params.RIOT_URL,
+            params.RIOT_PR,
+            params.RIOT_BRANCH,
+            "RIOT",
+            params.RIOT_OWNER,
+            "RIOT")
 }
 
-
 def stepFillBoardTestQueue() {
-    nodeBoards = common.getBoardsFromNodes()
-    tests = common.getTests()
+    nodeBoards = common.getBoardsFromNodes(params.HIL_BOARDS)
+    tests = common.getTests(params.HIL_TESTS)
     totalResults = common.getEmptyResultsFromBoards(nodeBoards)
     boardTestQueue = common.getBoardTestQueue(nodeBoards, tests)
 }
@@ -99,16 +108,21 @@ def stepStashRobotFWTests() {
     common.stashRobotFWTests()
 }
 
-def stepCompileResults()
-{
-    common.compileResults(true)
+def stepCompileResults() {
+    common.compileResults(params.GENERATE_HTML)
 }
 
-def stepGenerateBadge()
-{
-    def resCount =  common.countResults(totalResults)
-    common.setBadge(resCount['pass'], resCount['fail'], resCount['boards'])
+def stepNotify() {
+    if (params.ROBOTFW_PR != "") {
+        msg = common.generateNotifyMsgMD(totalResults)
+        common.notifyOnPR(params.ROBOTFW_OWNER, "RobotFW-tests", params.ROBOTFW_PR, msg)
+    }
+    if (params.RIOT_PR != "") {
+        msg = common.generateNotifyMsgMD(totalResults)
+        common.notifyOnPR(params.RIOT_OWNER, "RIOT", params.RIOT_PR, msg)
+    }
 }
+
 
 /* riot_build steps =============================================================== */
 def buildOnBuilder(String agentName) {
@@ -132,7 +146,7 @@ def processBuilderTask() {
 }
 
 def stepBuildJobs() {
-    common.buildJobs(boardTestQueue, totalResults)
+    common.buildJobs(boardTestQueue, totalResults, params.EXTRA_MAKE_COMMANDS)
 }
 
 /* test node steps ========================================================== */

@@ -1,0 +1,17 @@
+security:
+  queueItemAuthenticator:
+    authenticators:
+    - global:
+        strategy: triggeringUsersAuthorizationStrategy
+  scriptApproval:
+    approvedSignatures:
+    - field hudson.model.Slave name
+    - method hudson.model.AbstractCIBase getNodes
+    - method hudson.model.Computer isOnline
+    - method hudson.model.Node getLabelString
+    - method hudson.model.Node toComputer
+    - method jenkins.model.Jenkins getNode java.lang.String
+    - new java.util.AbstractMap$SimpleImmutableEntry java.lang.Object java.lang.Object
+    - staticMethod jenkins.model.Jenkins getInstance
+  globalJobDslSecurityConfiguration:
+    useScriptSecurity: false

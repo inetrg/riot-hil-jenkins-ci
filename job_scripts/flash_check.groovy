@@ -95,12 +95,12 @@ def stepRunNodeTests()
 
 def stepUnstashBinaries(test) {
     unstash name: "${env.BOARD}_${test.replace("/", "_")}"
-    sh script: "rsync -a ${TEST}/ /opt/RIOT/${TEST}/"
+    sh script: "rsync -a ${TEST}/ \${RIOTBASE}/${TEST}/"
 }
 
 def stepFlashAndTest()
 {
-    exit_code = sh script: "make flash-only test -C /opt/RIOT/${TEST}", returnStatus:true
+    exit_code = sh script: "make flash-only test -C \${RIOTBASE}/${TEST}", returnStatus:true
     if (exit_code == 0) {
         return
     }
@@ -116,7 +116,7 @@ def stepFlashAndTest()
         gpio -p mode 23 in
         sleep 1
     """, returnStatus:true
-    exit_code = sh script: "make flash-only test -C /opt/RIOT/${TEST}", returnStatus:true
+    exit_code = sh script: "make flash-only test -C \${RIOTBASE}/${TEST}", returnStatus:true
     if (exit_code != 0) {
         sh script: "sudo reboot"
     }

@@ -2,143 +2,130 @@
 
 This is a dockerized version of the HiL Jenkins CI.
 It uses Configuration-as-Coded and plugins to get a reproducible CI setup.
-A [testing Github account](https://github.com/riot-hil-bot) is created to simplify the local testing deployment as well as the staging phase.
+Production jobs are controlled with the job-dsl and job_scripts from this repo.
+A [testing Github account](https://github.com/riot-hil-bot) is created to simplify the testing deployment and control the github oauth.
 [Credentials](https://trac.inet.haw-hamburg.de/trac/wiki/riot/ci/hil) are available to members of the iNET working group.
 
 ### Design Decisions
 
 - the casc-config is baked into a non-persistent storage to force all changes in the configuration to be documented
-- The local testing does not include persistent storage of jenkins_home as we want to test with a fresh start
+- local setup can be simulated on ones own computer using the setup script to deploy
+- the job scripts are less transparent from the configuration but more stable this way, and one can always just start a pipeline with a manual script entered
 
 ## Docker Args
 
-In order to have defaults set to deploy but still possible to test on a local machine, many arguments can be input to work with ones own repo and setup.
-
-Please note that much of this is handled if using the [bot account](https://github.com/riot-hil-bot).
-
-- `GITHUB_OAUTH_CLIENT_ID`: This is the client id you get when setting up a github oauth, for testing [localhost](https://docs.github.com/en/free-pro-team@latest/developers/apps/authorizing-oauth-apps#localhost-redirect-urls) urls can be used.
-
-- `ADMIN_0`: Github username for admin account.
-Up to `ADMIN_2` are available and populated with defaults.
-Set all to yourself if security is an issue.
+There are some configurable env vars and args.
 
 - `GITHUB_UID`: A constant but unique numbers (that seemingly has no effect).
 
-- `GITHUB_REPO_OWNER`: The owner of the github repo containing RobotFW-Tests.
-This can be set to your repo for testing purposes.
-
-- `GITHUB_CI_USERNAME`: The username that is connected to the `client_secrets` of github oauth and `repo_token` for token access to github.
+- `GITHUB_CI_USERNAME`: The username that is connected to the `github_token` that is normally connected to the `riot-hil-bot` account.
 
 - `JENKINS_PREFIX`: The prefix to the root of the webserver.
 
 - `CASC_ENV`: Selects the additional configs to add, for example, `prod` brings in all the production nodes.
+Note that this must remain an arg as it is needed for build time copy of the config.
+The local directory is ignored by the `.gitignore` and gets populated by running setup scripts in the `scripts` folder.
 
 ## Secrets
-The default location of the secrets directory is `/opt/riot-hil-jenkins-ci-secrets/`.
-This can be overridden if needed when running the docker container but is needed for `docker-compose`.
+
+The secrets mount must contain specific filenames for everything.
+On the production/staging the path is known and accessible to admins.
+Local uses the `$USER` .ssh folder, this means that the `github_token` file will need to be added or the location of the default secrets folder for the local deployment will have to be changed.
 
 ### `SECRETS` Directory
 A `SECRETS` volume should be mounted with the following files and directory structure (pay attention to the permissions and users):
 ```
 <path_to_my_secrets>
-+-- jenkins_ssh_keys
-|   +-- id_rsa_master
-|   +-- id_rsa_master.pub
-+-- github_tokens
-|   +-- repo_token
-+-- github_oauth
-|   +-- client_secrets
++-- id_rsa
++-- id_rsa.pub        (only needed for local deployment)
++-- github_token
++-- oauth_client_id   (not needed for local deployment)
++-- oauth_secrets     (not needed for local deployment)
 ```
 
-- `id_rsa_master`: ssh private key that for accessing all the jenkins nodes.
-- `id_rsa_master.pub`: (optional) ssh public to be put in the jenkins nodes authorized_keys folder.
-- `repo_token`: Github token with `repo` attribute, should match the `GITHUB_CI_USERNAME` value.
-This is used for scanning and api calls to the RobotFW-Tests and RIOT repos
-- `client_secrets`: The secrets for the oauth access to Jenkins.
+- `id_rsa`: ssh private key that for accessing all the jenkins nodes.
+- `id_rsa.pub`: ssh public to be put in the jenkins nodes authorized_keys folder (used when setting up local jenkins agents to give master node access).
+- `github_token`: Github token with `repo` attribute, should match the `GITHUB_CI_USERNAME` value.
+This is used for all github calls, and gets around issues of private repos and rate limiting.
+**REMOVE ANY NEWLINES FROM THIS FILE: `echo -n "my_token" > github_token`.**
+- `oauth_client_id`: Not really a secret, the ID used for github oauth (not needed for local deployment).
+- `oauth_secrets`: The secrets for the oauth access to Jenkins (not needed for local deployment).
 This should be paired with the `GITHUB_CI_USERNAME` parameter.
 See [Github OAuth](https://docs.github.com/en/free-pro-team@latest/developers/apps/authorizing-oauth-apps#localhost-redirect-urls) for more info
 
 ## Manual Steps
 
-There are a few manual steps needed as autmation of these are a challenge.
+There are a few manual steps needed as automation of these are a challenge.
 
 1. The token (secret text and username/passwords) credentials must be manually
 copied as the readfile functionality seems to struggle and using envs are not
 deemed safe.
-2. The job scripts must be copied in as the escape characters really adds up,
-check the `job_scripts` directory.
 
 ## Local testing
-To test changes to the CI locally the [docker_compose_local.yml](docker_compose_local.yml) can be used with:
 
-```
-docker-compose up
-```
+A [deploy_local.sh](scripts/deploy_local.sh) script is made to help test deployments locally.
+Please review the script and what it does as that is probably better documentations.
+This will require some boards plugged into the machine if full testing is required (PHiLIP and DUT per test node).
+*There is an assumption that the local machine can run RIOT and RobotFW-tests.*
 
-To rebuild an image to ensure testing is correct use:
-```
-docker-compose build --no-cache
-docker-compose up --force-recreate
-```
+A quick description of what happens:
+1. Plug in n PHiLIP boards and n DUT boards in, noting the ports (also make sure the DUT boards vary as RIOT may get confused which board to flash).
+1. Run the `deploy_local.sh -n <amount_of_philip_dut_pairs>` script
+1. A jenkins user will be created and configured to support the nodes and build, note that this will be done on the machine and require sudo.
+1. The ssh key will added to the jenkins user authorized keys.
+1. There will be prompts for board configuration parameters of PHiLIP and the DUT
+1. The configuration for the test node and build node will be added into the `casc_configs/local` folder
+1. Any old instanced of the local deployment will be shut down and the volumes removed.
+1. A new instance of the local deployment will be build and started.
+1. Finally check `localhost:8080` in your browser.
 
-Then check `localhost:8080` in your browser.
-
-This requires the secrets to be available and in a known directory.
-It uses the [riot-hil-bot](https://github.com/riot-hil-bot) account for OAuth and a fork of the [RobotFW-tests](https://github.com/riot-hil-bot/RobotFW-tests) as the experimental account.
-This means pushing and triggering should be done with that account.
-
-Assuming you are not on the HAW address there should only be the `test_node` available as a slave node.
-This should be used with caution as other instances may be connecting and using it.
+DO NOT EXPOSE THIS PORT AS THERE ARE NO ADMIN PROTECTIONS (anyone can decrypt and steal the keys and tokens).
 
 ## Staging
-Staging should be use to test things before deploying and should be run on the HAW CI server.
-This means that it should have access to all the nodes.
-The only difference is that uses a different url and uses the [RobotFW-tests](https://github.com/riot-hil-bot/RobotFW-tests) from [riot-hil-bot](https://github.com/riot-hil-bot).
+Staging should be use to test things before deploying production.
+This means that it should have access to an external test node and the build servers.
 
 ```
-docker-compose -f docker-compose.staging.yml up
+docker-compose -f docker-compose.staging.yml up -d --build
 ```
 
 Note that this keeps a named volume in `users/docker/volumes/staging_jenkins_home`
 
-The volume may need to be removed for full testing
+Please remove the volume when shutting it down as we want to test an empty deployment.
 ```
-docker volume rm <staging_volume>
+docker-compose -f docker-compose.staging.yml down -v
 ```
 
 ## Deploying Production
 
-Make sure the archive is backed up `jenkins_home/_data/jobs/`
+Backups on nightlies should be running via a cron job and stored in `/net/pub/hil_backups`.
 
 ```
-docker-compose -f docker-compose.prod.yml up
+docker-compose -f docker-compose.prod.yml up --build
 ```
 
-## Backing Up Old Test Archives
-
-Jenkins keeps the archives in `jenkins_home/_data/jobs/`, this must be copied before anything that may delete it.
+Production should only use mounted volumes as they are less likely to be accidentally wiped by someone like me.
 
 ## Useful notes
 
 - We need to change the ownership of the secret files when copying
-- update the nginx conf (/etc/nginx/conf.d/riot-ci.conf to expose testing ports
-- The job must be reloaded after starting for credentials to run.
+- update the nginx conf (`/etc/nginx/conf.d/hil.riot-ci.conf `to expose testing ports
 - The pis require the authorized keys to be entered in the jenkins user `.ssh`.
 - The old deployment command was:
+- To update the plugins, get the current list from script console with:
+```groovy
+master_plugins="""
+PLUGINS_FROM_plugins_master.txt
+"""
+master_plugins = master_plugins.split()
+
+plug_strings = []
+def plugins = jenkins.model.Jenkins.instance.getPluginManager().getPlugins()
+plugins.each {
+  if (it.getShortName() in master_plugins) {
+
+  	plug_strings << "${it.getShortName()}:${it.getVersion()}"
+  }
+}
+println(plug_strings.sort().join("\n"))
 ```
-docker run -d -v hil_jenkins_home:/var/jenkins_home -p 8080:8080 -p 50000:50000 --env JENKINS_OPTS="--prefix=/hil" --restart always --name riot-hil-jenkins jenkins/jenkins:lts
-```
-- Jenkins home location: `users/docker/volumes/hil_jenkins_home/`
-- To copy all artifacts to staging use `/bin/cp -r /users/docker/volumes/hil_jenkins_home/_data/jobs/RIOT-HIL/* /users/docker/volumes/riot-hil-jenkins-ci_staging_jenkins_home/_data/jobs/RIOT-HIL -f`
-  - Some old outdated data such as old workflows may be imported and can be discarded
-
-## Known Issues
-- It seems that reading the `github_tokens/repo_token` has a problem and is not reading correctly, entering the token manually seems to work
-- The `triggers{period_timer(1)} is deprecated but the cron replacement doesn't seems to work
-- Job description doesn't seem to do anything...
-
-# TODO
-
-- update the names to use the new subdomain
-- Use FS mounted volume for production to prevent accidental deleting of named volumes
-- Expose the archive volume separate since it will be shared

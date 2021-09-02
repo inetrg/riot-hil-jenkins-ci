@@ -2,25 +2,25 @@ jenkins:
   nodes:
   - permanent:
       numExecutors: 1
-      labelString: "HIL nrf52840dk raspbian"
+      labelString: "HIL <MY_BOARD>"
       launcher:
         ssh:
           credentialsId: "jenkins_master_ssh"
-          host: "141.22.28.236"
+          host: "localhost"
           port: 22
           sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
-      name: "test_node"
-      nodeDescription: "Test node on the desk of KW"
+      name: "test_node_<AGENT_NUMBER>"
+      nodeDescription: "Local test node"
       nodeProperties:
       - envVars:
           env:
           - key: "BOARD"
-            value: "nrf52840dk"
+            value: "<MY_BOARD>"
           - key: "PHILIP_PORT"
-            value: "/dev/hil/philip"
+            value: "<PHILIP_PORT>"
           - key: "PORT"
-            value: "/dev/hil/dut"
+            value: "<BOARD_PORT>"
           - key: "RIOTBASE"
-            value: "/opt/RIOT"
-      remoteFS: "/opt/jenkins"
+            value: "<JENKINS_AGENT_HOME_DIR>/RIOT"
+      remoteFS: "/srv/jenkins/slave_<AGENT_NUMBER>"
       retentionStrategy: "always"

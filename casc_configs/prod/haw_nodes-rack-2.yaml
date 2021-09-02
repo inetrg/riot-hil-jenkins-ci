@@ -16,8 +16,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "remote-revb"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
           - key: "PHILIP_PORT"
@@ -48,8 +46,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "arduino-mega2560"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "HIL_CONNECT_WAIT"
             value: 3
           - key: "HIL_RESET_WAIT"
@@ -84,8 +80,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "nucleo-f103rb"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
           - key: "PHILIP_PORT"
@@ -118,8 +112,6 @@ jenkins:
           env:
           - key: "BOARD"
             value: "frdm-k22f"
-          - key: "GIT_CACHE_PATH"
-            value: "/opt/riot-scripts/"
           - key: "HIL_RESET_WAIT"
             value: 0
           - key: "PHILIP_PORT"
