@@ -44,7 +44,7 @@ echo "jenkins:" > $FILENAME
 echo "  nodes:" >> $FILENAME
 
 if [ -n "$NUMOF_AGENTS" ] && [ "$NUMOF_AGENTS" -eq "$NUMOF_AGENTS" ] 2>/dev/null; then
-    for ((i=1;i<$NUMOF_AGENTS;i++))
+    for ((i=1;i-1<${NUMOF_AGENTS};i++))
     do
         read -e -p "Test node $i board (samr21-xpro): " my_board
         read -e -p "Can PHiLIP reset the DUT? [Y/n]: " add_reset
