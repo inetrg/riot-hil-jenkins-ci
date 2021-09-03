@@ -22,7 +22,7 @@ pipelineJob('riot_tests') {
                         credentials('github_token')
                         github('inetrg/riot-hil-jenkins-ci')
                     }
-                    branch('pr/jobscripts')
+                    branch('main')
                 }
             }
             scriptPath('job_scripts/riot_tests.groovy')

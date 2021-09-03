@@ -17,7 +17,7 @@ def stepBuildJobs() {
         node ("master") {
             checkout([
                 $class: 'GitSCM',
-                branches: [[name: "refs/heads/pr/jobscripts"]],
+                branches: [[name: "refs/heads/main"]],
                 userRemoteConfigs: [[url: "https://github.com/inetrg/riot-hil-jenkins-ci.git",
                                     credentialsId: 'github_token']]
             ])

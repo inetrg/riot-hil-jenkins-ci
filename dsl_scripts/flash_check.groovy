@@ -15,7 +15,7 @@ pipelineJob('flash_check') {
                         credentials('github_token')
                         github('inetrg/riot-hil-jenkins-ci')
                     }
-                    branch('pr/jobscripts')
+                    branch('main')
                 }
             }
             scriptPath('job_scripts/flash_check.groovy')
