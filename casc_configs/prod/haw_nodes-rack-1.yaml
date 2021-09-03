@@ -10,6 +10,7 @@ jenkins:
           port: 22
           sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
       name: "r1p1"
+      mode: EXCLUSIVE
       nodeDescription: "The node in position 1 of rack 1 in the HiL Server Room"
       nodeProperties:
       - envVars:
@@ -40,6 +41,7 @@ jenkins:
           port: 22
           sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
       name: "r1p2"
+      mode: EXCLUSIVE
       nodeDescription: "The node in position 2 of rack 1 in the HiL Server Room"
       nodeProperties:
       - envVars:
@@ -66,6 +68,7 @@ jenkins:
           port: 22
           sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
       name: "r1p3"
+      mode: EXCLUSIVE
       nodeDescription: "The node in position 3 of rack 1 in the HiL Server Room"
       nodeProperties:
       - envVars:
@@ -98,6 +101,7 @@ jenkins:
           port: 22
           sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
       name: "r1p4"
+      mode: EXCLUSIVE
       nodeDescription: "The node in position 4 of rack 1 in the HiL Server Room"
       nodeProperties:
       - envVars:

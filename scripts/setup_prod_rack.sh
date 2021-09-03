@@ -61,6 +61,7 @@ if [ -n "$NUMOF_AGENTS" ] && [ "$NUMOF_AGENTS" -eq "$NUMOF_AGENTS" ] 2>/dev/null
         echo "          sshHostKeyVerificationStrategy: \"nonVerifyingKeyVerificationStrategy\"" >> $FILENAME
         echo "      name: \"r${RACK_NUM}p${i}\"" >> $FILENAME
         echo "      nodeDescription: \"The node in position ${i} of rack ${RACK_NUM} in the HiL Server Room\"" >> $FILENAME
+        echo "      mode: EXCLUSIVE" >> $FILENAME
         echo "      nodeProperties:" >> $FILENAME
         echo "      - envVars:" >> $FILENAME
         echo "          env:" >> $FILENAME

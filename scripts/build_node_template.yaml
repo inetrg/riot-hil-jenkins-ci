@@ -10,6 +10,7 @@ jenkins:
           port: 22
           sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
       name: "test_builder"
+      mode: EXCLUSIVE
       nodeDescription: "Local test build server"
       remoteFS: "<JENKINS_AGENT_HOME_DIR>/builder"
       retentionStrategy: "always"

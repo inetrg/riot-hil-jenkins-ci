@@ -10,6 +10,7 @@ jenkins:
           port: 22
           sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
       name: "mobi15"
+      mode: EXCLUSIVE
       nodeDescription: "RIOT build server"
       remoteFS: "/srv/jenkins-slave/"
       retentionStrategy: "always"
@@ -23,6 +24,7 @@ jenkins:
           port: 22
           sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
       name: "mobi36"
+      mode: EXCLUSIVE
       nodeDescription: "RIOT build server"
       remoteFS: "/srv/jenkins-slave/"
       retentionStrategy: "always"
@@ -36,6 +38,7 @@ jenkins:
           port: 22
           sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
       name: "mobi39"
+      mode: EXCLUSIVE
       nodeDescription: "RIOT build server"
       nodeProperties:
       remoteFS: "/srv/jenkins-slave/"

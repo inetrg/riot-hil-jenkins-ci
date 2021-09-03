@@ -10,6 +10,7 @@ jenkins:
           port: 22
           sshHostKeyVerificationStrategy: "nonVerifyingKeyVerificationStrategy"
       name: "test_node_<AGENT_NUMBER>"
+      mode: EXCLUSIVE
       nodeDescription: "Local test node"
       nodeProperties:
       - envVars:
