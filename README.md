@@ -106,6 +106,15 @@ docker-compose -f docker-compose.prod.yml up --build
 
 Production should only use mounted volumes as they are less likely to be accidentally wiped by someone like me.
 
+To cleanup production (maybe some old configs are saved and you want to remove them):
+
+```
+cd /opt/riot-hil-jenkins-home
+ls | grep -v jobs | xargs rm -r
+cd jobs
+# Remove the old jobs you don't care about
+```
+
 ## Useful notes
 
 - We need to change the ownership of the secret files when copying
@@ -129,3 +138,4 @@ plugins.each {
 }
 println(plug_strings.sort().join("\n"))
 ```
+- Some jobs may fail, such as the riot_tests or robot_tests if the master repos are not checked out initially and a PR is being used, this is because it tries to rebase to master but there is non available.
