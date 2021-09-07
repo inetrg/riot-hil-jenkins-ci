@@ -222,16 +222,15 @@ def generateNotifyMsgMD(results)
                 passed++
                 test_details += "pass"
             }
+            else if (!test.value['support']) {
+                skipped++
+                test_details += "skip"
+            }
             else if (!test.value['build']) {
                 failed++
                 build_failed++
                 test_details += "build fail"
                 emoji = "&#10060;"
-
-            }
-            else if (!test.value['support']) {
-                skipped++
-                test_details += "skip"
             }
             else if (!test.value['flash']){
                 failed++
