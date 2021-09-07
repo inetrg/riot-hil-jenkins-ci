@@ -197,75 +197,129 @@ def setBadge(passed, failed, boards) {
 /* Generates a nice markdown based summary of the test */
 def generateNotifyMsgMD(results)
 {
-    boards = 0
-    passed = 0
-    failed = 0
-    skipped = 0
+/* results =
+[my_board_1:[
+  my_test_1:[build: true, support: true, flash: true, test: false],
+  my_test_2: [build: false, support: false, flash: true, test: true]
+ ],
+ my_passing_board: [
+  my_test_1: [build: true, support: true, flash: true, test: true],
+  my_test_2: [build: true, support: true, flash: true, test: true]
+ ],
+ my_board_3:[
+  my_test_1: [build: false, support: false, flash: false, test: false],
+  my_test_2: [build: false, support: false, flash: false, test: true],
+  my_test_3: [build: false, support: false, flash: true, test: false],
+  my_test_4: [build: false, support: false, flash: true, test: true],
+  my_test_5: [build: false, support: true, flash: false, test: false],
+  my_test_6: [build: false, support: true, flash: false, test: true],
+  my_test_7: [build: false, support: true, flash: true, test: false],
+  my_test_8: [build: false, support: true, flash: true, test: true],
+  my_test_9: [build: true, support: false, flash: false, test: false],
+  my_test_10: [build: true, support: false, flash: false, test: true],
+  my_test_11: [build: true, support: false, flash: true, test: false],
+  my_test_12: [build: true, support: false, flash: true, test: true],
+  my_test_13: [build: true, support: true, flash: false, test: false],
+  my_test_14: [build: true, support: true, flash: false, test: true],
+  my_test_15: [build: true, support: true, flash: true, test: false],
+  my_test_16: [build: true, support: true, flash: true, test: true]
+ ]
+]
+*/
+    TEST_FAIL_EMOJI = "&#10060;"
+    BUILD_FAIL_EMOJI = TEST_FAIL_EMOJI
+    UNKNOWN_FAIL_EMOJI = TEST_FAIL_EMOJI
+    SKIP_EMOJI = "&#128584;"
+    FLASH_FAIL_EMOJI = "&#128556;"
+    PASS_EMOJI = "&#9989;"
 
-    //detail_msg = ""
+    boards = 0
+    total_passed = 0
+    total_failed = 0
+    total_skipped = 0
+
     pass_msg = []
     flash_fail_msg = []
     fail_msg = []
 
     for (board in mapToList(results)) {
         boards++
-
+        tests_passed = 0
         tests_failed = 0
         build_failed = 0
         flash_failed = 0
-        test_details = ""
-        emoji = "&#9989;"
+        unknown_failed = 0
+        tests_skipped = 0
+        failed_test_msg = []
+        pass_test_msg = []
+        board_emoji = PASS_EMOJI
         for (test in mapToList(board.value)) {
             /*  test.value = [build: true, support: true, flash: true, test: false] */
-            test_details += "\n  ${test.key}: "
+            test_details = "\n|${test.key}|"
             if (test.value['test']) {
-                passed++
-                test_details += "pass"
+                total_passed++
+                tests_passed++
+                test_details += PASS_EMOJI + " pass"
+                pass_test_msg += test_details
             }
             else if (!test.value['support']) {
-                skipped++
-                test_details += "skip"
-            }
-            else if (!test.value['build']) {
-                failed++
-                build_failed++
-                test_details += "build fail"
-                emoji = "&#10060;"
-            }
-            else if (!test.value['flash']){
-                failed++
-                flash_failed++
-                test_details += "flash fail"
-                if (emoji != "&#10060;") {
-                    emoji = "&#128556;"
-                }
-            }
-            else if (!test.value['test']){
-                failed++
-                tests_failed++
-                test_details += "fail"
-                emoji = "&#10060;"
+                total_skipped++
+                tests_skipped++
+                test_details += SKIP_EMOJI + " skip"
+                pass_test_msg += test_details
             }
             else {
-                failed++
-                test_details += "unknown fail"
-                emoji = "&#10060;"
+                if (!test.value['build']) {
+                    total_failed++
+                    build_failed++
+                    test_details += BUILD_FAIL_EMOJI + " build fail"
+                    board_emoji = BUILD_FAIL_EMOJI
+                }
+                else if (!test.value['flash']){
+                    total_failed++
+                    flash_failed++
+                    test_details += FLASH_FAIL_EMOJI + " flash fail"
+                    if (board_emoji != TEST_FAIL_EMOJI &&
+                        board_emoji != BUILD_FAIL_EMOJI &&
+                        board_emoji != UNKNOWN_FAIL_EMOJI) {
+                        board_emoji = FLASH_FAIL_EMOJI
+                    }
+                }
+                else if (!test.value['test']){
+                    total_failed++
+                    tests_failed++
+                    test_details += TEST_FAIL_EMOJI + " test fail"
+                    board_emoji = TEST_FAIL_EMOJI
+                }
+                else {
+                    total_failed++
+                    unknown_failed++
+                    test_details += UNKNOWN_FAIL_EMOJI + " unknown fail"
+                    board_emoji = UNKNOWN_FAIL_EMOJI
+                }
+                failed_test_msg += test_details
             }
         }
 
-        detail_msg = "<details><summary>&nbsp;&nbsp;${emoji}&nbsp;${board.key} "
+        detail_msg = "<details><summary>&nbsp;&nbsp;${board_emoji}&nbsp;${board.key} "
         if (tests_failed) {
             detail_msg += "<strong>(${tests_failed} fail test)</strong> "
         }
         if (build_failed) {
-            detail_msg += "<<strong>(${build_failed} fail build)</strong> "
+            detail_msg += "<strong>(${build_failed} fail build)</strong> "
         }
         if (flash_failed) {
             detail_msg += "(${flash_failed} fail flash) "
         }
-        detail_msg += "</summary>\n\n```"
-        detail_msg += test_details
-        detail_msg += "\n```\n</details>\n"
+        detail_msg += "</summary>\n\n"
+        detail_msg += "|PASS|FAIL|SKIP\n"
+        detail_msg += "|-|-|-\n"
+        detail_msg += "|${tests_passed}|${tests_failed+flash_failed+build_failed+unknown_failed}|${tests_skipped}\n\n"
+        detail_msg += "|TEST|RESULT\n"
+        detail_msg += "|-|-"
+        detail_msg += failed_test_msg.join("")
+        detail_msg += pass_test_msg.join("")
+        detail_msg += "\n</details>\n"
         if (tests_failed || build_failed) {
             fail_msg += detail_msg
         }
@@ -280,7 +334,7 @@ def generateNotifyMsgMD(results)
     full_msg = "[HiL Test Results](${env.RUN_DISPLAY_URL})\n"
     full_msg += "|PASS|FAIL|SKIP\n"
     full_msg += "|-|-|-\n"
-    full_msg += "|${passed}|${failed}|${skipped}\n\n"
+    full_msg += "|${total_passed}|${total_failed}|${total_skipped}\n\n"
     full_msg += "<details>\n"
     full_msg += fail_msg.join("\n")
     full_msg += flash_fail_msg.join("\n")
