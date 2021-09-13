@@ -2,7 +2,7 @@ pipelineJob('riot_tests') {
     description("Runs riot (on-target) tests on boards based on parameters.")
     logRotator {
         numToKeep(512)
-        artifactNumToKeep(32)
+        artifactNumToKeep(512)
     }
     parameters {
         stringParam('HIL_BOARDS', 'all', 'Space separated list of boards to run tests on, if all then all boards connected will run.')

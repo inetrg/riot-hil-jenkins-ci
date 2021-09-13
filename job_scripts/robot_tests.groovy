@@ -10,8 +10,8 @@ import jenkins.model.*
 /* Global variables are decalred without `def` as they must be used in both
  * declaritive and scripted mode */
 collectBuilders = [:]
-boardTestQueue = []
-totalResults = [:]
+boardTestQueue = [].asSynchronized()
+totalResults = [:].asSynchronized()
 nodeBoards = []
 
 /* pipeline ================================================================= */
