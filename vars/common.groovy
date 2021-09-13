@@ -253,7 +253,9 @@ def generateNotifyMsgMD(results)
         failed_test_msg = []
         pass_test_msg = []
         board_emoji = PASS_EMOJI
+
         for (test in mapToList(board.value)) {
+            link = "https://hil.riot-os.org/results/${env.JOB_NAME}/${env.BUILD_NUMBER}/${board.key}/${test.key.replace("/", "_")}/console_log.html"
             /*  test.value = [build: true, support: true, flash: true, test: false] */
             test_details = "\n|${test.key}|"
             if (test.value['test']) {
@@ -263,12 +265,14 @@ def generateNotifyMsgMD(results)
                 pass_test_msg += test_details
             }
             else if (!test.value['support']) {
+                test_details = "\n|[${test.key}](${link})|"
                 total_skipped++
                 tests_skipped++
                 test_details += SKIP_EMOJI + " skip"
                 pass_test_msg += test_details
             }
             else {
+                test_details = "\n|[${test.key}](${link})|"
                 if (!test.value['build']) {
                     total_failed++
                     build_failed++
@@ -392,8 +396,13 @@ def getActiveBuildNodes() {
  */
 def buildJobs(board_test_queue, results, extra_make_cmd = "") {
     while (board_test_queue.size() > 0) {
-        def boardtest = board_test_queue.pop()
-        buildJob(boardtest['board'], boardtest['test'], results, extra_make_cmd)
+        try {
+            def boardtest = board_test_queue.pop()
+            buildJob(boardtest['board'], boardtest['test'], results, extra_make_cmd)
+        }
+        catch (java.util.NoSuchElementException exc) {
+            println("Due to concurrency issues, it is ok try to pop")
+        }
     }
 }
 
@@ -405,7 +414,7 @@ def buildJob(board, test, results, extra_make_cmd = "") {
     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE',
             catchInterruptions: false) {
         results[board][test] = ['build': false, 'support': false, 'flash': false, 'test': false]
-        exit_code = sh script: "RIOT_CI_BUILD=1 DOCKER_MAKE_ARGS=-j BUILD_IN_DOCKER=1 BOARD=${board} make -C ${test} clean all ${extra_make_cmd} 2>build_output.log",
+        exit_code = sh script: "RIOT_CI_BUILD=1 DOCKER_MAKE_ARGS=-j BUILD_IN_DOCKER=1 BOARD=${board} make -C ${test} clean all ${extra_make_cmd} > build_output.log 2>&1",
             returnStatus: true,
             label: "Build BOARD=${board} TEST=${test}"
 
@@ -413,14 +422,22 @@ def buildJob(board, test, results, extra_make_cmd = "") {
             /* Must remove all / to get stash to work */
             results[board][test]['build'] = true
             s_name = (board + "_" + test).replace("/", "_")
-            catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE',
-            catchInterruptions: false) {
+            try{
                 stash name: s_name, includes: "${test}/bin/${board}/*.elf,${test}/bin/${board}/*.hex,${test}/bin/${board}/*.bin"
                 results[board][test]['support'] = true
             }
+            catch (hudson.AbortException ex) {
+                archiveConsoleLog(board, test, "No binary available, probably insufficient memory")
+            }
+            catch (Exception ex) {
+                unstable('Stashing binary failed!')
+            }
         }
         else {
+
             def output = readFile('build_output.log').trim()
+            echo output
+            archiveConsoleLog(board, test, output)
             if (output.contains("There are unsatisfied feature requirements")) {
                 results[board][test]['support'] = false
             }
@@ -428,7 +445,6 @@ def buildJob(board, test, results, extra_make_cmd = "") {
                 results[board][test]['support'] = true
                 results[board][test]['build_error_msg'] = output
             }
-            echo output
         }
     }
 }
@@ -455,7 +471,14 @@ def unstashBinaries(test) {
 /* Flashes binary to the DUT of the node. */
 def flashTest(test)
 {
-    sh script: "RIOT_CI_BUILD=1 make -C ${test} flash-only", label: "Flash ${test}"
+    exit_code = sh script: "RIOT_CI_BUILD=1 make -C ${test} flash-only > flash.log  2>&1",
+                   label: "Flash ${test}", returnStatus: true
+    def output = readFile('flash.log').trim()
+    echo output
+    if (exit_code != 0) {
+        archiveConsoleLog(env.BOARD, test, output)
+        sh "exit ${exit_code}"
+    }
 }
 
 /* Does all the things needed for robot tests. */
@@ -469,7 +492,14 @@ def rFTest(test)
      * allowed to fail */
     catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE',
             catchInterruptions: false) {
-        sh script: "make -C ${test} robot-test", label: "Run ${test} test"
+        exit_code = sh script: "make -C ${test} robot-test > robot_test.log 2>&1",
+                        label: "Run ${test} test", returnStatus: true
+        def output = readFile('robot_test.log').trim()
+        echo output
+        if (exit_code != 0) {
+            archiveConsoleLog(env.BOARD, test, output)
+            sh "exit ${exit_code}"
+        }
         test_result = true
     }
     return test_result
@@ -508,6 +538,33 @@ def archiveSkippedTestResults(test)
 """
     archiveArtifacts artifacts: dir
     junit testResults: dir, allowEmptyResults: true
+}
+
+def archiveConsoleLog(board, test, log) {
+    def test_name = test.replaceAll('/', '_')
+    def filepath = "build/robot/${board}/${test_name}/console_log.html"
+
+    def file_content = """<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${board} ${test} output</title>
+  <style>
+    *{box-sizing:border-box}
+    body {background-color:#22272e;color:#adbac7;padding:10px;margin:0;min-height:100vh;}
+    pre,code {margin:0;padding:0;}
+  </style>
+</head>
+<body>
+  <div id="container">
+    <pre><code>${log}</code></pre>
+  </div>
+</body>
+</html>
+"""
+    writeFile file: filepath, text: file_content
+    archiveArtifacts artifacts: filepath
 }
 
 /* Tries to flash and test each test.
@@ -565,8 +622,14 @@ def riotTest(test)
     def test_name = test.replaceAll('/', '_')
     catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE',
             catchInterruptions: false) {
-        sh script: "make -C ${test} test",
-                label: "Run ${test} test"
+        exit_code = sh script: "make -C ${test} test > test.log 2>&1",
+                       label: "Run ${test} test", returnStatus: true
+        def output = readFile('test.log').trim()
+        echo output
+        if (exit_code != 0) {
+            archiveConsoleLog(env.BOARD, test, output)
+            sh "exit ${exit_code}"
+        }
         test_result = true
     }
     return test_result
