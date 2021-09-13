@@ -13,5 +13,7 @@ security:
     - method jenkins.model.Jenkins getNode java.lang.String
     - new java.util.AbstractMap$SimpleImmutableEntry java.lang.Object java.lang.Object
     - staticMethod jenkins.model.Jenkins getInstance
+    - staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods asSynchronized java.util.List
+    - staticMethod org.codehaus.groovy.runtime.DefaultGroovyMethods asSynchronized java.util.Map
   globalJobDslSecurityConfiguration:
     useScriptSecurity: false
