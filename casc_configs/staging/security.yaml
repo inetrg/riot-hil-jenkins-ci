@@ -12,6 +12,7 @@ jenkins:
         - "Overall/Administer:MrKevinWeiss"
         - "Overall/Administer:ozfox"
         - "Overall/Administer:cgundogan"
+        - "Overall/Administer:MarcelStenzel"
         - "Overall/Read:authenticated"
         - "Overall/Read:anonymous"
         - "Job/Read:anonymous"
