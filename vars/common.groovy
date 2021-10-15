@@ -578,6 +578,7 @@ def flashAndRFTestNodes(results)
 {
     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE', catchInterruptions: false) {
         stage( "${env.BOARD} setup on  ${env.NODE_NAME}"){
+            cleanWs()
             unstashRobotFWTests()
         }
         for (def test in mapToList(results[env.BOARD])) {

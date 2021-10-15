@@ -24,3 +24,4 @@ ssh:2.6.1
 timestamper:1.13
 workflow-aggregator:2.6
 workflow-api:2.46
+ws-cleanup:0.39
