@@ -24,6 +24,7 @@ def helperCheckoutRepo(url='', pr='', branch='', dir='.', owner='', repo='') {
             branches: [[name: "pr/${pr}"]],
             extensions: [[$class: 'RelativeTargetDirectory',
                           relativeTargetDir: dir],
+                         [$class: 'CleanBeforeCheckout'],
                          [$class: "PreBuildMerge",
                           options: [mergeTarget: "master",
                                     mergeRemote: "origin"]]],
@@ -38,7 +39,8 @@ def helperCheckoutRepo(url='', pr='', branch='', dir='.', owner='', repo='') {
             $class: 'GitSCM',
             branches: [[name: "${branch}"]],
             extensions: [[$class: 'RelativeTargetDirectory',
-                          relativeTargetDir: dir]],
+                          relativeTargetDir: dir],
+                         [$class: 'CleanBeforeCheckout']],
             userRemoteConfigs: [[url: url,
                                  credentialsId: 'github_token']]
         ])
@@ -578,7 +580,9 @@ def flashAndRFTestNodes(results)
 {
     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE', catchInterruptions: false) {
         stage( "${env.BOARD} setup on  ${env.NODE_NAME}"){
-            cleanWs()
+            /* We need to clean as the workspace may contain files from other */
+            /* unstashes such as new tests that are not in master */
+            cleanWs(disableDeferredWipeout: true)
             unstashRobotFWTests()
         }
         for (def test in mapToList(results[env.BOARD])) {
