@@ -198,7 +198,7 @@ jenkins:
           - key: "BOARD"
             value: "slstk3400a"
           - key: "HIL_RESET_WAIT"
-            value: 0
+            value: 3
           - key: "PERIPH_TIMER_HZ"
             value: 250000
           - key: "PHILIP_PORT"
