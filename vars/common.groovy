@@ -659,10 +659,17 @@ def flashAndRiotTestNodes(results)
                             unstashBinaries(test.key)
                             /* No need to reset as flashing and the test should manage
                             * this */
-                            regcheck(test.key)
-                            flashTest(test.key)
-                            test.value['flash'] = true
-                            test.value['test'] = riotTest(test.key)
+                            if (compareOldArtifact(test.key)) {
+                                stage("Skipping ${test.key}") {
+                                    echo "Skipping due to previously tested"
+                                    test.value["support"] = true
+                                }
+                            }
+                            else {
+                                flashTest(test.key)
+                                test.value['flash'] = true
+                                test.value['test'] = riotTest(test.key)
+                            }
                         }
                     }
                     else {
@@ -681,34 +688,28 @@ def flashAndRiotTestNodes(results)
     }
 }
 
-
-def regcheck(test) {
-    compareOldArtifact("${test}/bin/${env.BOARD}/test-input-hash.sha1")
-}
-
-def compareOldArtifact(name) {
-    try {
-        hash = readFile(file: "${name}")
-        echo("name = ${name}")
-        echo("hash = ${hash}")
-        for (int i = currentBuild.previousBuild.number; i > 0; i--) {
-            try {
-                copyArtifacts(projectName: currentBuild.projectName,
-                            selector: specific("${i}"),
-                            filter: "${name}")
-                def previousHash = readFile(file: "${name}")
-                echo("i = ${i}")
-                echo("previousHash = ${previousHash}")
-                if (previousHash == hash) {
-                    echo "FOUND HASH"
-                    return true
-                }
-            } catch(err) {
-                // ignore error
+def compareOldArtifact(test) {
+    name = "${test}/bin/${env.BOARD}/test-input-hash.sha1"
+    if (!fileExists(name)) {
+        return false
+    }
+    hash = readFile(file: "${name}")
+    for (int i = currentBuild.previousBuild.number; i > 0; i--) {
+        try {
+            copyArtifacts(projectName: currentBuild.projectName,
+                        selector: specific("${i}"),
+                        filter: "${name}")
+            def previousHash = readFile(file: "${name}")
+            echo("i = ${i}")
+            echo("previousHash = ${previousHash}")
+            if (previousHash == hash) {
+                println
+                return true
             }
+        } catch(err) {
+            println(err)
+            // ignore error
         }
-    } catch(err) {
-
     }
     return false
 }
