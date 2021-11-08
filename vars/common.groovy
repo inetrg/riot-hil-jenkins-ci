@@ -416,7 +416,7 @@ def buildJob(board, test, results, extra_make_cmd = "") {
     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE',
             catchInterruptions: false) {
         results[board][test] = ['build': false, 'support': false, 'flash': false, 'test': false]
-        exit_code = sh script: "RIOT_CI_BUILD=1 DOCKER_MAKE_ARGS=-j BUILD_IN_DOCKER=1 BOARD=${board} make -C ${test} clean all ${extra_make_cmd} > build_output.log 2>&1",
+        exit_code = sh script: "RIOT_CI_BUILD=1 DOCKER_MAKE_ARGS=-j BUILD_IN_DOCKER=1 BOARD=${board} make -C ${test} clean all test-input-hash ${extra_make_cmd} > build_output.log 2>&1",
             returnStatus: true,
             label: "Build BOARD=${board} TEST=${test}"
 
@@ -425,7 +425,7 @@ def buildJob(board, test, results, extra_make_cmd = "") {
             results[board][test]['build'] = true
             s_name = (board + "_" + test).replace("/", "_")
             try{
-                stash name: s_name, includes: "${test}/bin/${board}/*.elf,${test}/bin/${board}/*.hex,${test}/bin/${board}/*.bin"
+                stash name: s_name, includes: "${test}/bin/${board}/*.elf,${test}/bin/${board}/*.hex,${test}/bin/${board}/*.bin,${test}/bin/${board}/*.sha1"
                 results[board][test]['support'] = true
             }
             catch (hudson.AbortException ex) {
