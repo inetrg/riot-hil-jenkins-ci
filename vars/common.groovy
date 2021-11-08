@@ -700,10 +700,7 @@ def compareOldArtifact(test) {
                         selector: specific("${i}"),
                         filter: "${name}")
             def previousHash = readFile(file: "${name}")
-            echo("i = ${i}")
-            echo("previousHash = ${previousHash}")
             if (previousHash == hash) {
-                println
                 return true
             }
         } catch(err) {
