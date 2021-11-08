@@ -703,9 +703,8 @@ def compareOldArtifact(test) {
             if (previousHash == hash) {
                 return true
             }
-        } catch(err) {
+        } catch(hudson.AbortException err) {
             println(err)
-            // ignore error
         }
     }
     return false
