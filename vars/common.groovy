@@ -426,6 +426,7 @@ def buildJob(board, test, results, extra_make_cmd = "") {
             s_name = (board + "_" + test).replace("/", "_")
             try{
                 stash name: s_name, includes: "${test}/bin/${board}/*.elf,${test}/bin/${board}/*.hex,${test}/bin/${board}/*.bin,${test}/bin/${board}/*.sha1"
+                archiveArtifacts artifacts: "${test}/bin/${board}/*.sha1", allowEmptyArchive: true
                 results[board][test]['support'] = true
             }
             catch (hudson.AbortException ex) {
@@ -658,6 +659,7 @@ def flashAndRiotTestNodes(results)
                             unstashBinaries(test.key)
                             /* No need to reset as flashing and the test should manage
                             * this */
+                            regcheck(test.key)
                             flashTest(test.key)
                             test.value['flash'] = true
                             test.value['test'] = riotTest(test.key)
@@ -677,4 +679,40 @@ def flashAndRiotTestNodes(results)
             }
         }
     }
+}
+
+
+def regcheck(test) {
+    files = findFiles(glob: "${test}/bin/${env.BOARD}/*.sha1")
+    for (file in files) {
+        compareOldArtifact(file.name)
+    }
+
+}
+
+def compareOldArtifact(hash) {
+    try {
+        hash = readFile(file: "${name}")
+        echo("name = ${name}")
+        echo("hash = ${hash}")
+        for (int i = currentBuild.previousBuild.number; i > 0; i--) {
+            try {
+                copyArtifacts(projectName: currentBuild.projectName,
+                            selector: specific("${i}"),
+                            filter: "${name}")
+                def previousHash = readFile(file: "${name}")
+                echo("i = ${i}")
+                echo("previousHash = ${previousHash}")
+                if (previousHash == hash) {
+                    echo "FOUND HASH"
+                    return true
+                }
+            } catch(err) {
+                // ignore error
+            }
+        }
+    } catch(err) {
+
+    }
+    return false
 }
