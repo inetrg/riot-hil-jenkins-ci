@@ -696,6 +696,7 @@ def compareOldArtifact(test) {
     hash = readFile(file: "${name}")
     for (int i = currentBuild.previousBuild.number; i > 0; i--) {
         try {
+            /* copy artifact does requires builds to be saved as well... This means log rotate little builds but large artifacts won't work */
             copyArtifacts(projectName: currentBuild.projectName,
                         selector: specific("${i}"),
                         filter: "${name}")
