@@ -416,7 +416,7 @@ def buildJob(board, test, results, extra_make_cmd = "") {
     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE',
             catchInterruptions: false) {
         results[board][test] = ['build': false, 'support': false, 'flash': false, 'test': false]
-        exit_code = sh script: "RIOT_CI_BUILD=1 DOCKER_MAKE_ARGS=-j BUILD_IN_DOCKER=1 BOARD=${board} make -C ${test} clean all ${extra_make_cmd} > build_output.log 2>&1",
+        exit_code = sh script: "RIOT_CI_BUILD=1 DOCKER_MAKE_ARGS=-j BUILD_IN_DOCKER=1 BOARD=${board} make -C ${test} clean all test-input-hash ${extra_make_cmd} > build_output.log 2>&1",
             returnStatus: true,
             label: "Build BOARD=${board} TEST=${test}"
 
@@ -425,7 +425,8 @@ def buildJob(board, test, results, extra_make_cmd = "") {
             results[board][test]['build'] = true
             s_name = (board + "_" + test).replace("/", "_")
             try{
-                stash name: s_name, includes: "${test}/bin/${board}/*.elf,${test}/bin/${board}/*.hex,${test}/bin/${board}/*.bin"
+                stash name: s_name, includes: "${test}/bin/${board}/*.elf,${test}/bin/${board}/*.hex,${test}/bin/${board}/*.bin,${test}/bin/${board}/*.sha1"
+                archiveArtifacts artifacts: "${test}/bin/${board}/*.sha1", allowEmptyArchive: true
                 results[board][test]['support'] = true
             }
             catch (hudson.AbortException ex) {
@@ -658,9 +659,17 @@ def flashAndRiotTestNodes(results)
                             unstashBinaries(test.key)
                             /* No need to reset as flashing and the test should manage
                             * this */
-                            flashTest(test.key)
-                            test.value['flash'] = true
-                            test.value['test'] = riotTest(test.key)
+                            if (compareOldArtifact(test.key)) {
+                                stage("Skipping ${test.key}") {
+                                    echo "Skipping due to previously tested"
+                                    test.value["support"] = true
+                                }
+                            }
+                            else {
+                                flashTest(test.key)
+                                test.value['flash'] = true
+                                test.value['test'] = riotTest(test.key)
+                            }
                         }
                     }
                     else {
@@ -677,4 +686,27 @@ def flashAndRiotTestNodes(results)
             }
         }
     }
+}
+
+def compareOldArtifact(test) {
+    name = "${test}/bin/${env.BOARD}/test-input-hash.sha1"
+    if (!fileExists(name)) {
+        return false
+    }
+    hash = readFile(file: "${name}")
+    for (int i = currentBuild.previousBuild.number; i > 0; i--) {
+        try {
+            /* copy artifact does requires builds to be saved as well... This means log rotate little builds but large artifacts won't work */
+            copyArtifacts(projectName: currentBuild.projectName,
+                        selector: specific("${i}"),
+                        filter: "${name}")
+            def previousHash = readFile(file: "${name}")
+            if (previousHash == hash) {
+                return true
+            }
+        } catch(hudson.AbortException err) {
+            println(err)
+        }
+    }
+    return false
 }
