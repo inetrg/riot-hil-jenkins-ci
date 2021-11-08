@@ -686,7 +686,7 @@ def regcheck(test) {
     compareOldArtifact("${test}/bin/${env.BOARD}/test-input-hash.sha1")
 }
 
-def compareOldArtifact(hash) {
+def compareOldArtifact(name) {
     try {
         hash = readFile(file: "${name}")
         echo("name = ${name}")
