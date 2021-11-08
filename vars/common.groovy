@@ -683,11 +683,7 @@ def flashAndRiotTestNodes(results)
 
 
 def regcheck(test) {
-    files = findFiles(glob: "${test}/bin/${env.BOARD}/*.sha1")
-    for (file in files) {
-        compareOldArtifact(file.name)
-    }
-
+    compareOldArtifact("${test}/bin/${env.BOARD}/test-input-hash.sha1")
 }
 
 def compareOldArtifact(hash) {
