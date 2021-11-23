@@ -126,7 +126,7 @@ def runParallel(args) {
                 timeout(time: 60, unit: 'MINUTES') {
                     script {
                         stepUnstashRIOT()
-                        common.flashAndRiotTestNodes(totalResults)
+                        common.flashAndRiotTestNodes(totalResults, params.EXTRA_TEST_COMMANDS)
                     }
                 }
             }

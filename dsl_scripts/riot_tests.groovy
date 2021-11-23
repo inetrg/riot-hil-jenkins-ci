@@ -12,6 +12,7 @@ pipelineJob('riot_tests') {
         stringParam('RIOT_PR', '', 'PR number of RIOT, if blank use RIOT_BRANCH.')
         stringParam('RIOT_BRANCH', 'refs/heads/master', 'Branch of RIOT, can be commit id, branch, or tag.')
         stringParam('EXTRA_MAKE_COMMANDS', '', 'Extra flags to use when building with make, for example USEMODULE+=something, note this is built in docker.')
+        stringParam('EXTRA_TEST_COMMANDS', '', 'Extra flags to use when testing with make, for example RIOT_TERMINAL+=something.')
     }
     definition {
         cpsScm {

@@ -484,7 +484,7 @@ def flashTest(test)
 }
 
 /* Does all the things needed for robot tests. */
-def rFTest(test)
+def rFTest(test, extra_test_cmd = "")
 {
     def test_result = false
     def test_name = test.replaceAll('/', '_')
@@ -494,7 +494,7 @@ def rFTest(test)
      * allowed to fail */
     catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE',
             catchInterruptions: false) {
-        exit_code = sh script: "make -C ${test} robot-test > robot_test.log 2>&1",
+        exit_code = sh script: "make -C ${test} robot-test ${extra_test_cmd} > robot_test.log 2>&1",
                         label: "Run ${test} test", returnStatus: true
         def output = readFile('robot_test.log').trim()
         echo output
@@ -576,7 +576,7 @@ def archiveConsoleLog(board, test, log) {
  *
  * Required results from the buildJobs.
  */
-def flashAndRFTestNodes(results)
+def flashAndRFTestNodes(results, extra_test_cmd = "")
 {
     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE', catchInterruptions: false) {
         stage( "${env.BOARD} setup on  ${env.NODE_NAME}"){
@@ -596,7 +596,7 @@ def flashAndRFTestNodes(results)
                             * this */
                             flashTest(test.key)
                             test.value['flash']  = true
-                            test.value['test'] = rFTest(test.key)
+                            test.value['test'] = rFTest(test.key, extra_test_cmd)
                             sh script: "make -C ${test.key} robot-plot",
                                 label: "Generate plot for ${test} test if possible"
                             archiveTestResults(test.key)
@@ -621,13 +621,13 @@ def flashAndRFTestNodes(results)
     }
 }
 
-def riotTest(test)
+def riotTest(test, extra_test_cmd = "")
 {
     def test_result = false
     def test_name = test.replaceAll('/', '_')
     catchError(buildResult: 'UNSTABLE', stageResult: 'UNSTABLE',
             catchInterruptions: false) {
-        exit_code = sh script: "make -C ${test} test > test.log 2>&1",
+        exit_code = sh script: "make -C ${test} test ${extra_test_cmd}> test.log 2>&1",
                        label: "Run ${test} test", returnStatus: true
         def output = readFile('test.log').trim()
         echo output
@@ -647,7 +647,7 @@ def riotTest(test)
  *
  * Required results from the buildJobs.
  */
-def flashAndRiotTestNodes(results)
+def flashAndRiotTestNodes(results, extra_test_cmd = "")
 {
     catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE', catchInterruptions: false) {
         for (def test in mapToList(results[env.BOARD])) {
@@ -660,7 +660,7 @@ def flashAndRiotTestNodes(results)
                             * this */
                             flashTest(test.key)
                             test.value['flash'] = true
-                            test.value['test'] = riotTest(test.key)
+                            test.value['test'] = riotTest(test.key, extra_test_cmd)
                         }
                     }
                     else {
