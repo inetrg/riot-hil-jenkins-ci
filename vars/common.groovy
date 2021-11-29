@@ -26,7 +26,7 @@ def helperCheckoutRepo(url='', pr='', branch='', dir='.', owner='', repo='') {
                           relativeTargetDir: dir],
                          [$class: 'CleanBeforeCheckout'],
                          [$class: "PreBuildMerge",
-                          options: [mergeTarget: "master",
+                          options: [mergeTarget: "refs/heads/master",
                                     mergeRemote: "origin"]]],
             userRemoteConfigs: [[url: url,
                                  refspec: "+refs/pull/${pr}/head:refs/remotes/origin/pr/${pr}",
