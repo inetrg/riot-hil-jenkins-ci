@@ -28,7 +28,8 @@ def helperCheckoutRepo(url='', pr='', branch='', dir='.', owner='', repo='') {
                          [$class: "PreBuildMerge",
                           options: [mergeTarget: "master",
                                     fastForwardMode: "FF",
-                                    mergeRemote: "origin"]]],
+                                    mergeRemote: "origin",
+                                    mergeStrategy: "OURS"]]],
             userRemoteConfigs: [[url: url,
                                  refspec: "+refs/pull/${pr}/head:refs/remotes/origin/pr/${pr}",
                                  credentialsId: 'github_token']]
