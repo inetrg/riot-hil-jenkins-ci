@@ -50,7 +50,7 @@ def helperCheckoutRepo(url='', pr='', branch='', dir='.', owner='', repo='') {
 
 def getBoardsFromNodes(boards='all') {
     if (boards == 'all') {
-        boards = []
+        boards = [].asSynchronized()
         for (node_name in nodesByLabel('HIL')) {
             node (node_name) {
                 boards.push(env.BOARD)
@@ -85,9 +85,9 @@ def getTests(tests='all') {
  * as it doesn't always play nice with parallel nodes.
  */
 def getEmptyResultsFromBoards(boards) {
-    results = [:]
+    results = [:].asSynchronized()
     for (board in boards) {
-        results[board] = [:]
+        results[board] = [:].asSynchronized()
     }
     return results
 }
@@ -98,7 +98,7 @@ def getEmptyResultsFromBoards(boards) {
  * test/board.
  */
 def getBoardTestQueue(boards, tests) {
-    board_test_queue = []
+    board_test_queue = [].asSynchronized()
 
     for (test in tests) {
         for (board in boards) {
@@ -240,9 +240,9 @@ def generateNotifyMsgMD(results)
     total_failed = 0
     total_skipped = 0
 
-    pass_msg = []
-    flash_fail_msg = []
-    fail_msg = []
+    pass_msg = [].asSynchronized()
+    flash_fail_msg = [].asSynchronized()
+    fail_msg = [].asSynchronized()
 
     for (board in mapToList(results)) {
         boards++
@@ -252,8 +252,8 @@ def generateNotifyMsgMD(results)
         flash_failed = 0
         unknown_failed = 0
         tests_skipped = 0
-        failed_test_msg = []
-        pass_test_msg = []
+        failed_test_msg = [].asSynchronized()
+        pass_test_msg = [].asSynchronized()
         board_emoji = PASS_EMOJI
 
         for (test in mapToList(board.value)) {
@@ -455,7 +455,7 @@ def buildJob(board, test, results, extra_make_cmd = "") {
 /* Needed to deal with groovy garbage. */
 @NonCPS
 def mapToList(depmap) {
-    def dlist = []
+    def dlist = [].asSynchronized()
     for (def entry2 in depmap) {
         dlist.add(new java.util.AbstractMap.SimpleImmutableEntry(entry2.key, entry2.value))
     }
